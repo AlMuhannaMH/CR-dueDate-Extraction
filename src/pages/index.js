@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { QRScanner } from '@yudiel/react-qr-scanner';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for browser-only QRScanner component
+const QRScanner = dynamic(
+  () => import('@yudiel/react-qr-scanner'),
+  { ssr: false }
+);
 
 export default function Home() {
   const [ocrText, setOcrText] = useState('');
   const [expiry, setExpiry] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Handle QR code scan (for Ministry CR verification)
+  // Handle QR code scan (opens Ministry CR verification URL)
   const handleQr = (result) => {
-    if (result) {
-      window.open(result, '_blank');
-    }
+    if (result) window.open(result, '_blank');
   };
 
-  // Handle file/image upload
+  // Handle CR certificate image upload, send file to OCR.Space
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -23,7 +27,7 @@ export default function Home() {
     formData.append('file', file);
     formData.append('language', 'ara');
     formData.append('isOverlayRequired', 'false');
-    formData.append('apikey', 'K89620932088957'); // Replace by your OCR.Space API Key (get free at https://ocr.space/ocrapi)
+    formData.append('apikey', 'K89620932088957'); // Your live OCR.Space key
 
     const res = await fetch('https://api.ocr.space/parse/image', {
       method: 'POST',
@@ -33,7 +37,7 @@ export default function Home() {
     const text = data?.ParsedResults?.[0]?.ParsedText || '';
     setOcrText(text);
 
-    // Extract expiry with regex
+    // Regex extracts the expiry date string from OCR text (Arabic)
     const regex = /وتنتهي صلاحية الشهاد(?:ة|ات) في[:\s]*([\d\/\-]+)/;
     const match = text.match(regex);
     setExpiry(match ? match[1] : 'Not found');
