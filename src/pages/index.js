@@ -1,12 +1,36 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { ErrorBoundary } from '../components/ErrorBoundary';
 
-// Most robust: Get .default or fallback to module itself.
+// Dynamic import disables SSR to prevent server-side errors
 const QRScanner = dynamic(
-  () => import('@yudiel/react-qr-scanner').then(mod => mod.default ?? mod),
+  () => import('@yudiel/react-qr-scanner').then((mod) => mod.default ?? mod),
   { ssr: false }
 );
+
+// Simple error boundary to catch client runtime errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, errorMessage: error.message || 'Unknown error' };
+  }
+  componentDidCatch(error, info) {
+    console.error('Client-side exception:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ color: '#900', padding: 20 }}>
+          <h3>Something went wrong</h3>
+          <p>{this.state.errorMessage}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Home() {
   const [ocrText, setOcrText] = useState('');
@@ -15,11 +39,7 @@ export default function Home() {
   const [error, setError] = useState('');
 
   const handleQr = (result) => {
-    try {
-      if (result) window.open(result, '_blank');
-    } catch (err) {
-      setError('QR Scan failed: ' + (err.message || err));
-    }
+    if (result) window.open(result, '_blank');
   };
 
   const handleUpload = async (e) => {
