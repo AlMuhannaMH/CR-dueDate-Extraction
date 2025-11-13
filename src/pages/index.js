@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
-// Dynamic, SSR-disabled import for browser-only QRScanner
+// Most robust: Get .default or fallback to module itself.
 const QRScanner = dynamic(
-  () => import('@yudiel/react-qr-scanner'),
+  () => import('@yudiel/react-qr-scanner').then(mod => mod.default ?? mod),
   { ssr: false }
 );
 
@@ -14,7 +14,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Handle QR code scan (opens Ministry CR verification link)
   const handleQr = (result) => {
     try {
       if (result) window.open(result, '_blank');
@@ -23,7 +22,6 @@ export default function Home() {
     }
   };
 
-  // Handle CR certificate image upload
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
