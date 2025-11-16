@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>OCR.space Engine 2 - Dynamic JSON</title>
+<style>
+    body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f4f4f4; }
+    .container { max-width: 800px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #333; margin-bottom: 20px; }
+    .section { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
+    input[type="file"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+    button { padding: 12px 18px; margin: 10px 5px 0 0; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    #startBtn { background-color: #28a745; color: #fff; }
+    #clearBtn { background-color: #dc3545; color: #fff; }
+    #downloadTxtBtn { background-color: #007bff; color: #fff; display: none; }
+    #downloadJsonBtn { background-color: #17a2b8; color: #fff; display: none; }
+    #progressBar { width: 100%; background: #eee; border-radius: 6px; margin-top: 10px; display: none; }
+    #progressBar div { height: 20px; width: 0%; background: #28a745; border-radius: 6px; text-align: center; color: #fff; font-size: 12px; }
+    #result, #jsonOutput { margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ccc; }
+    #jsonOutput { font-size: 13px; background: #eee; overflow-x: auto; }
+    .error { color: red; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2 id="title">OCR Extract & Convert to JSON</h2>
+
+    <div class="section">
+        <label id="uploadLabel">Upload Image or PDF:</label>
+        <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp,.pdf">
+    </div>
+
+    <div class="section">
+        <label id="urlLabel">Or Paste Image URL:</label>
+        <input type="text" id="urlInput" placeholder="https://example.com/image.jpg">
+    </div>
+
+    <div class="section">
+        <label>Select UI Language:</label>
+        <select id="uiLang">
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+        </select>
+    </div>
+
+    <div class="section">
+        <button id="startBtn">Start OCR</button>
+        <button id="clearBtn">Clear</button>
+        <button id="downloadTxtBtn">Download Text</button>
+        <button id="downloadJsonBtn">Download JSON</button>
+    </div>
+
+    <div id="progressBar"><div></div></div>
+    <div id="result"></div>
+    <div id="jsonOutput"></div>
+</div>
+
+<script>
+let extractedText = '';
+let generatedJson = {};
+
+function updateUILanguage(lang) {
+    if (lang === 'ar') {
+        document.getElementById('title').innerText = 'استخراج النص وتحويله إلى JSON';
+        document.getElementById('uploadLabel').innerText = 'رفع صورة أو ملف PDF:';
+        document.getElementById('urlLabel').innerText = 'أدخل رابط الصورة:';
+        document.getElementById('startBtn').innerText = 'ابدأ التحويل';
+        document.getElementById('clearBtn').innerText = 'مسح';
+        document.getElementById('downloadTxtBtn').innerText = 'تحميل النص';
+        document.getElementById('downloadJsonBtn').innerText = 'تحميل JSON';
+    } else {
+        document.getElementById('title').innerText = 'OCR Extract & Convert to JSON';
+        document.getElementById('uploadLabel').innerText = 'Upload Image or PDF:';
+        document.getElementById('urlLabel').innerText = 'Or Paste Image URL:';
+        document.getElementById('startBtn').innerText = 'Start OCR';
+        document.getElementById('clearBtn').innerText = 'Clear';
+        document.getElementById('downloadTxtBtn').innerText = 'Download Text';
+        document.getElementById('downloadJsonBtn').innerText = 'Download JSON';
+    }
+}
+
+document.getElementById('uiLang').addEventListener('change', function() {
+    updateUILanguage(this.value);
+});
+
+async function runOCR() {
+    const file = document.getElementById('fileInput').files[0];
+    const url = document.getElementById('urlInput').value.trim();
+
+    if (!file && !url) {
+        alert('Please upload a file or enter an image URL.');
+        return null;
+    }
+
+    const formData = new FormData();
+    formData.append('apikey', 'YOUR_API_KEY'); // Replace with your OCR.space API key
+    formData.append('OCREngine', '2');
+    formData.append('language', 'auto');
+
+    if (file) formData.append('file', file);
+    else formData.append('url', url);
+
+    return fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData
+    });
+}
+
+function normalizeArabicNumbers(str) {
+    const arabicNums = { '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9' };
+    return str.replace(/[٠-٩]/g, d => arabicNums[d]);
+}
+
+function buildDynamicJson(text) {
+    text = normalizeArabicNumbers(text);
+
+    const unifiedNumber = text.match(/الرقم الموحد\s*:\s*(\d+)/);
+    const establishmentNumber = text.match(/رقم المنشأة\s*:\s*(\d+)/);
+    const dates = text.match(/\d{4}\/\d{2}\/\d{2}/g);
+    const investedCapital = text.match(/مقدار المال المستثمر\s*:\s*([\d,]+)/);
+    const passportNumber = text.match(/رقم الحفيظة أو الجواز\s*:\s*(\d+)/);
+    const managerMatch = text.match(/المدير\s*:\s*(.+)/);
+    const companyMatch = text.match(/اسم.*الشركة\s*:\s*(.+)/);
+    const receiptNumber = text.match(/الإيصال رقم\s*:\s*(\d+)/);
+
+    return {
+        certificate: {
+            issuing_authority: "وزارة التجارة",
+            certificate_type: "شهادة تسجيل فرع شركة أجنبية",
+            city: text.includes("الرياض") ? "الرياض" : "غير محدد",
+            issue_date: dates && dates[1] ? dates[1] : "غير محدد",
+            receipt_number: receiptNumber ? receiptNumber[1] : "غير محدد"
+        },
+        basic_information: {
+            unified_number: unifiedNumber ? unifiedNumber[1] : "غير محدد",
+            establishment_number: establishmentNumber ? establishmentNumber[1] : "غير محدد",
+            company_name: companyMatch ? companyMatch[1].trim() : "غير محدد",
+            company_nationality: text.includes("لبناني") ? "لبناني" : "غير محدد"
+        },
+        validity_period: {
+            start_date: dates && dates[0] ? dates[0] : "غير محدد",
+            expiry_date: dates && dates.length > 2 ? dates[2] : "غير محدد"
+        },
+        financial_information: {
+            invested_capital: investedCapital ? investedCapital[1] : "غير محدد"
+        },
+        manager_information: {
+            name: managerMatch ? managerMatch[1].trim() : "غير محدد",
+            passport_or_id_number: passportNumber ? passportNumber[1] : "غير محدد"
+        }
+    };
+}
+
+document.getElementById('startBtn').addEventListener('click', async function() {
+    document.getElementById('result').innerHTML = '';
+    document.getElementById('jsonOutput').innerHTML = '';
+    document.getElementById('downloadTxtBtn').style.display = 'none';
+    document.getElementById('downloadJsonBtn').style.display = 'none';
+
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = progressBar.querySelector('div');
+    progressBar.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressFill.innerText = '0%';
+
+    try {
+        progressFill.style.width = '30%';
+        progressFill.innerText = 'Uploading...';
+
+        const response = await runOCR();
+        progressFill.style.width = '60%';
+        progressFill.innerText = 'Processing...';
+
+        const data = await response.json();
+        progressFill.style.width = '100%';
+        progressFill.innerText = 'Done';
+
+        extractedText = data.ParsedResults && data.ParsedResults[0].ParsedText.trim();
+        document.getElementById('result').innerHTML = `<h3>Extracted Text:</h3>${extractedText || '<span class="error">No text found.</span>'}`;
+
+        if (extractedText) {
+            generatedJson = buildDynamicJson(extractedText);
+            document.getElementById('jsonOutput').innerHTML = `<h4>Dynamic JSON:</h4><pre>${JSON.stringify(generatedJson, null, 2)}</pre>`;
+            document.getElementById('downloadTxtBtn').style.display = 'inline-block';
+            document.getElementById('downloadJsonBtn').style.display = 'inline-block';
+        }
+    } catch (error) {
+        document.getElementById('result').innerHTML = '<span class="error">Error occurred during OCR.</span>';
+        console.error(error);
+    } finally {
+        setTimeout(() => { progressBar.style.display = 'none'; }, 1500);
+    }
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+    document.getElementById('fileInput').value = '';
+    document.getElementById('urlInput').value = '';
+    document.getElementById('result').innerHTML = '';
+    document.getElementById('jsonOutput').innerHTML = '';
+    document.getElementById('downloadTxtBtn').style.display = 'none';
+    document.getElementById('downloadJsonBtn').style.display = 'none';
+    extractedText = '';
+    generatedJson = {};
+});
+
+document.getElementById('downloadTxtBtn').addEventListener('click', function() {
+    const blob = new Blob([extractedText], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'OCR_Result.txt';
+    link.click();
+});
+
+document.getElementById('downloadJsonBtn').addEventListener('click', function() {
+    const blob = new Blob([JSON.stringify(generatedJson, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'OCR_Result.json';
+    link.click();
+});
+</script>
+</body>
+</html>
