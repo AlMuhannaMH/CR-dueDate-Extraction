@@ -54,41 +54,29 @@
       --color-bg-7: rgba(236, 72, 153, 0.08);
       --color-bg-8: rgba(6, 182, 212, 0.08);
 
-      /* Light Color Scheme */
-      --color-primary: #E8E5FF;
-      --color-primary-dark: #D4CEFD;
-      --color-secondary: #FFD4E5;
-      --color-success: #D4F4DD;
-      --color-danger: #FFE0E0;
-      --color-info: #D4F0FF;
-      --color-background: #F9F8FC;
+      /* Light Color Scheme - Bright and Airy */
+      --color-background: #F5F7FB;
       --color-surface: #FFFFFF;
-      --color-text-main: #2D2D3D;
-      --color-text-secondary: #7A7A8E;
-      --color-border: #E8E5F0;
-      --color-error-custom: #E74C3C;
-      
-      /* Semantic Color Tokens (Light Mode) */
-      --color-background: #F9F8FC;
-      --color-surface: #FFFFFF;
-      --color-text: #2D2D3D;
-      --color-text-secondary: #7A7A8E;
-      --color-primary: #E8E5FF;
-      --color-primary-hover: #D4CEFD;
-      --color-primary-active: #C0B8FB;
-      --color-secondary: #FFD4E5;
-      --color-secondary-hover: #FFC1D9;
-      --color-secondary-active: #FFB0CE;
-      --color-border: #E8E5F0;
-      --color-btn-primary-text: #2D2D3D;
-      --color-card-border: #E8E5F0;
-      --color-card-border-inner: #E8E5F0;
-      --color-error: #FFE0E0;
-      --color-success: #D4F4DD;
-      --color-warning: #FFEAA7;
-      --color-info: #D4F0FF;
-      --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
-      --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
+      --color-card-light: #F8FBFE;
+      --color-border: #E0E7F1;
+      --color-primary: #6366F1;
+      --color-primary-hover: #4F46E5;
+      --color-primary-active: #4338CA;
+      --color-secondary: #EC4899;
+      --color-secondary-hover: #DB2777;
+      --color-secondary-active: #BE185D;
+      --color-success: #10B981;
+      --color-danger: #EF4444;
+      --color-info: #0EA5E9;
+      --color-text: #1F2937;
+      --color-text-secondary: #6B7280;
+      --color-text-light: #9CA3AF;
+      --color-btn-primary-text: #FFFFFF;
+      --color-card-border: #E0E7F1;
+      --color-card-border-inner: #E0E7F1;
+      --color-shadow: rgba(0, 0, 0, 0.05);
+      --color-focus-ring: rgba(99, 102, 241, 0.4);
+      --color-select-caret: rgba(31, 41, 55, 0.8);
 
       /* Common style patterns */
       --focus-ring: 0 0 0 3px var(--color-focus-ring);
@@ -275,18 +263,18 @@
 
     .file-upload-wrapper {
       position: relative;
-      border: 2px dashed #E8E5F0;
+      border: 2px dashed var(--color-border);
       border-radius: var(--radius-md);
       padding: var(--space-32);
       text-align: center;
-      background: #F5F3FF;
+      background: var(--color-card-light);
       transition: all var(--duration-normal) var(--ease-standard);
       cursor: pointer;
     }
 
     .file-upload-wrapper:hover {
-      border-color: #D4CEFD;
-      background: #EDE9FE;
+      border-color: var(--color-primary);
+      background: #EEF2FF;
     }
 
     .file-upload-wrapper input[type="file"] {
@@ -409,13 +397,13 @@
     .btn-primary {
       background: var(--color-primary);
       color: var(--color-btn-primary-text);
-      border: 1px solid #D4CEFD;
+      border: 1px solid var(--color-primary);
     }
 
     .btn-primary:hover:not(:disabled) {
       background: var(--color-primary-hover);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(232, 229, 255, 0.4);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
 
     .btn-primary:active:not(:disabled) {
@@ -424,51 +412,52 @@
     }
 
     .btn-secondary {
-      background: var(--color-secondary);
+      background: #FFFFFF;
       color: var(--color-text);
-      border: 1px solid #FFC1D9;
+      border: 1px solid var(--color-border);
     }
 
     .btn-secondary:hover:not(:disabled) {
-      background: var(--color-secondary-hover);
+      background: var(--color-card-light);
+      border-color: var(--color-primary);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(255, 212, 229, 0.4);
+      box-shadow: 0 4px 12px var(--color-shadow);
     }
 
     .btn-danger {
-      background: #FFE0E0;
-      color: #C0392B;
-      border: 1px solid #FFCCCC;
+      background: var(--color-danger);
+      color: #FFFFFF;
+      border: 1px solid var(--color-danger);
     }
 
     .btn-danger:hover:not(:disabled) {
-      background: #FFCCCC;
+      background: #DC2626;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(255, 224, 224, 0.4);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
 
     .btn-info {
-      background: #D4F0FF;
-      color: #2874A6;
-      border: 1px solid #AED6F1;
+      background: var(--color-info);
+      color: #FFFFFF;
+      border: 1px solid var(--color-info);
     }
 
     .btn-info:hover:not(:disabled) {
-      background: #AED6F1;
+      background: #0284C7;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(212, 240, 255, 0.4);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
     }
     
     .btn-success {
-      background: #D4F4DD;
-      color: #27AE60;
-      border: 1px solid #A9DFBF;
+      background: var(--color-success);
+      color: #FFFFFF;
+      border: 1px solid var(--color-success);
     }
 
     .btn-success:hover:not(:disabled) {
-      background: #A9DFBF;
+      background: #059669;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(212, 244, 221, 0.4);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
 
     .btn:disabled {
@@ -512,8 +501,8 @@
     }
 
     .result-text {
-      background: #FEF9E7;
-      border: 1px solid #E8E5F0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
       border-radius: var(--radius-base);
       padding: var(--space-16);
       font-size: var(--font-size-base);
@@ -525,8 +514,8 @@
     }
 
     .json-output {
-      background: #E8F8F5;
-      border: 1px solid #E8E5F0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
       border-radius: var(--radius-base);
       padding: var(--space-16);
       overflow-x: auto;
@@ -628,8 +617,8 @@
     }
 
     .form-display {
-      background: #FAFAFA;
-      border: 1px solid #E8E5F0;
+      background: var(--color-card-light);
+      border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: var(--space-24);
       margin-top: var(--space-16);
@@ -641,7 +630,7 @@
       color: var(--color-text);
       margin-bottom: var(--space-16);
       padding-bottom: var(--space-12);
-      border-bottom: 2px solid #E8E5F0;
+      border-bottom: 2px solid var(--color-border);
     }
 
     .form-grid {
@@ -665,7 +654,7 @@
     .form-field-value {
       padding: var(--space-10) var(--space-12);
       background: var(--color-surface);
-      border: 1px solid #E8E5F0;
+      border: 1px solid var(--color-border);
       border-radius: var(--radius-sm);
       font-size: var(--font-size-base);
       color: var(--color-text);
@@ -683,7 +672,7 @@
       flex-wrap: wrap;
       margin-top: var(--space-20);
       padding-top: var(--space-20);
-      border-top: 1px solid #E8E5F0;
+      border-top: 1px solid var(--color-border);
     }
 
     @media (max-width: 640px) {
@@ -1197,42 +1186,100 @@
       return str.replace(/[٠-٩]/g, (d) => arabicNums[d]);
     }
 
+    function extractField(text, patterns) {
+      for (let pattern of patterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+          return match[1].trim();
+        }
+      }
+      return 'غير محدد';
+    }
+
     function buildDynamicJson(text) {
+      // Normalize Arabic numbers FIRST
       text = normalizeArabicNumbers(text);
 
-      const unifiedNumber = text.match(/الرقم الموحد\s*:\s*(\d+)/);
-      const establishmentNumber = text.match(/رقم المنشأة\s*:\s*(\d+)/);
-      const dates = text.match(/\d{4}\/\d{2}\/\d{2}/g);
-      const investedCapital = text.match(/مقدار المال المستثمر\s*:\s*([\d,]+)/);
-      const passportNumber = text.match(/رقم الحفيظة أو الجواز\s*:\s*(\d+)/);
-      const managerMatch = text.match(/المدير\s*:\s*(.+)/);
-      const companyMatch = text.match(/اسم.*الشركة\s*:\s*(.+)/);
-      const receiptNumber = text.match(/الإيصال رقم\s*:\s*(\d+)/);
+      // Extract Unified Number with multiple patterns
+      const unifiedNumberPatterns = [
+        /الرقم\s+الموحد[:\s]+([0-9]+)/,
+        /الموحد[:\s]+([0-9]+)/,
+        /موحد[:\s]+([0-9]+)/
+      ];
+      const unifiedNumber = extractField(text, unifiedNumberPatterns);
+
+      // Extract Establishment Number with multiple patterns
+      const establishmentNumberPatterns = [
+        /رقم\s+المنشأة[:\s]+([0-9]+)/,
+        /المنشأة[:\s]+([0-9]+)/,
+        /منشأة[:\s]+([0-9]+)/
+      ];
+      const establishmentNumber = extractField(text, establishmentNumberPatterns);
+
+      // Extract Company Name with multiple patterns
+      const companyNamePatterns = [
+        /(?:اسم\s+)?(?:الشركة|الشركة\s+الأجنبية)[:\s]+(.+?)(?=\n|رقم|$)/,
+        /الشركة[:\s]+([^\n]+)/,
+        /فرع\s+(.+?)(?=\n|رقم|$)/
+      ];
+      const companyName = extractField(text, companyNamePatterns);
+
+      // Extract all dates
+      const dates = text.match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/g) || [];
+      
+      // Extract Invested Capital
+      const investedCapitalPatterns = [
+        /مقدار\s+المال\s+المستثمر[:\s]+([0-9,]+)/,
+        /المال\s+المستثمر[:\s]+([0-9,]+)/
+      ];
+      const investedCapital = extractField(text, investedCapitalPatterns);
+
+      // Extract Passport Number
+      const passportNumberPatterns = [
+        /(?:رقم\s+)?(?:الحفيظة|الجواز)[:\s]+([0-9]+)/,
+        /الجواز[:\s]+([0-9]+)/,
+        /الحفيظة[:\s]+([0-9]+)/
+      ];
+      const passportNumber = extractField(text, passportNumberPatterns);
+
+      // Extract Manager Name
+      const managerNamePatterns = [
+        /(?:مدير|المدير)[:\s]+(.+?)(?=\n|رقم|$)/,
+        /المدير[:\s]+([^\n]+)/
+      ];
+      const managerName = extractField(text, managerNamePatterns);
+
+      // Extract Receipt Number
+      const receiptNumberPatterns = [
+        /الإيصال\s+رقم[:\s]+([0-9]+)/,
+        /إيصال[:\s]+([0-9]+)/
+      ];
+      const receiptNumber = extractField(text, receiptNumberPatterns);
 
       return {
         certificate: {
           issuing_authority: 'وزارة التجارة',
           certificate_type: 'شهادة تسجيل فرع شركة أجنبية',
           city: text.includes('الرياض') ? 'الرياض' : 'غير محدد',
-          issue_date: dates && dates[1] ? dates[1] : 'غير محدد',
-          receipt_number: receiptNumber ? receiptNumber[1] : 'غير محدد',
+          issue_date: dates.length >= 2 ? dates[1] : (dates.length >= 1 ? dates[0] : 'غير محدد'),
+          receipt_number: receiptNumber,
         },
         basic_information: {
-          unified_number: unifiedNumber ? unifiedNumber[1] : 'غير محدد',
-          establishment_number: establishmentNumber ? establishmentNumber[1] : 'غير محدد',
-          company_name: companyMatch ? companyMatch[1].trim() : 'غير محدد',
+          unified_number: unifiedNumber,
+          establishment_number: establishmentNumber,
+          company_name: companyName,
           company_nationality: text.includes('لبناني') ? 'لبناني' : 'غير محدد',
         },
         validity_period: {
-          start_date: dates && dates[0] ? dates[0] : 'غير محدد',
-          expiry_date: dates && dates.length > 2 ? dates[2] : 'غير محدد',
+          start_date: dates.length >= 1 ? dates[0] : 'غير محدد',
+          expiry_date: dates.length >= 3 ? dates[dates.length - 1] : (dates.length >= 2 ? dates[dates.length - 1] : 'غير محدد'),
         },
         financial_information: {
-          invested_capital: investedCapital ? investedCapital[1] : 'غير محدد',
+          invested_capital: investedCapital,
         },
         manager_information: {
-          name: managerMatch ? managerMatch[1].trim() : 'غير محدد',
-          passport_or_id_number: passportNumber ? passportNumber[1] : 'غير محدد',
+          name: managerName,
+          passport_or_id_number: passportNumber,
         },
       };
     }
