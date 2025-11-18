@@ -157,11 +157,28 @@
       box-shadow: 0 8px 20px rgba(0,132,61,0.06);
     }
 
+    /* reduced upload icon size (was 56px) */
     .upload-icon {
-      width: 56px;
-      height: 56px;
+      width: 44px;
+      height: 44px;
       margin: 0 auto 12px;
       color: var(--color-primary);
+    }
+
+    /* global small icon size used in headings/buttons */
+    svg.icon {
+      width: 20px;
+      height: 20px;
+      vertical-align: middle;
+      margin-inline-start: 8px;
+      flex: 0 0 20px;
+    }
+
+    /* smaller icons inside buttons */
+    .btn svg.icon {
+      width: 16px;
+      height: 16px;
+      margin-inline-start: 6px;
     }
 
     .upload-text {
