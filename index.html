@@ -1,972 +1,147 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>استخراج النص المحسّن - Enhanced OCR</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Text Extractor | مستخرج النصوص</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <style>
-        :root {
-            --color-primary: #007a33;
-            --color-primary-dark: #004c99;
-            --color-secondary: #00a651;
-            --color-accent: #ffb81c;
-            --color-background: #ffffff;
-            --color-surface: #f8f9fa;
-            --color-text: #1a1a1a;
-            --color-text-light: #6c757d;
-            --color-border: #dee2e6;
-            --color-success: #28a745;
-            --color-warning: #ffc107;
-            --color-error: #dc3545;
-            --color-info: #17a2b8;
-            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
-            --border-radius: 12px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Tajawal", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            color: var(--color-text);
-        }
-
-        .container {
-            background: var(--color-background);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-lg);
-            max-width: 900px;
-            width: 100%;
-            padding: 40px;
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-        }
-
-        .language-toggle {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .language-toggle button {
-            padding: 8px 20px;
-            border: 2px solid var(--color-primary);
-            background: transparent;
-            color: var(--color-primary);
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-
-        .language-toggle button.active {
-            background: var(--color-primary);
-            color: white;
-        }
-
-        .upload-area {
-            border: 3px dashed var(--color-border);
-            border-radius: var(--border-radius);
-            padding: 60px 20px;
-            text-align: center;
-            background: var(--color-surface);
-            transition: var(--transition);
-            cursor: pointer;
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .upload-area:hover,
-        .upload-area.drag-over {
-            border-color: var(--color-primary);
-            background: rgba(0, 122, 51, 0.05);
-            transform: scale(1.02);
-        }
-
-        .upload-area input[type="file"] {
-            display: none;
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--color-primary);
-        }
-
-        .file-info {
-            background: var(--color-surface);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .file-info.active {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .file-limits {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            color: #856404;
-        }
-
-        .progress-container {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .progress-container.active {
-            display: block;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--color-surface);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-            transition: width 0.3s ease;
-            width: 0%;
-        }
-
-        .progress-text {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--color-text-light);
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .controls select,
-        .controls button {
-            flex: 1;
-            min-width: 150px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: 2px solid var(--color-border);
-            font-family: inherit;
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-
-        .controls button {
-            background: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .controls button:hover:not(:disabled) {
-            background: var(--color-primary-dark);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .controls button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .output-section {
-            display: none;
-        }
-
-        .output-section.active {
-            display: block;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .output-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--color-border);
-        }
-
-        .output-tabs button {
-            padding: 12px 24px;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--color-text-light);
-            transition: var(--transition);
-        }
-
-        .output-tabs button.active {
-            color: var(--color-primary);
-            border-bottom-color: var(--color-primary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .output-box {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .export-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .export-buttons button {
-            flex: 1;
-            min-width: 120px;
-            padding: 10px 20px;
-            background: var(--color-secondary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-
-        .export-buttons button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-lg);
-            max-width: 400px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .alert.success {
-            background: var(--color-success);
-            color: white;
-        }
-
-        .alert.error {
-            background: var(--color-error);
-            color: white;
-        }
-
-        .alert.info {
-            background: var(--color-info);
-            color: white;
-        }
-
-        .spinner {
-            display: none;
-            border: 4px solid var(--color-surface);
-            border-top: 4px solid var(--color-primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        .spinner.active {
-            display: block;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .retry-info {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
-            display: none;
-        }
-
-        .retry-info.active {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            .header h1 {
-                font-size: 1.8rem;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .controls select,
-            .controls button {
-                min-width: 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 id="title">استخراج النص المحسّن</h1>
-            <p id="subtitle">نسخة محسّنة مع معالجة أخطاء متقدمة وأداء أفضل</p>
-        </div>
-
-        <div class="language-toggle">
-            <button onclick="switchLanguage('ar')" class="active" id="langAr">العربية</button>
-            <button onclick="switchLanguage('en')" id="langEn">English</button>
-        </div>
-
-        <div class="file-limits" id="fileLimits">
-            ⚠️ الحد الأقصى: 50MB للملف | 50 صفحة للـ PDF | الصيغ المدعومة: JPG, PNG, PDF
-        </div>
-
-        <div class="retry-info" id="retryInfo">
-            🔄 جارٍ إعادة المحاولة...
-        </div>
-
-        <div class="upload-area" id="uploadArea">
-            <input type="file" id="fileInput" accept="image/*,application/pdf" />
-            <div class="upload-icon">📁</div>
-            <p id="uploadText">اسحب وأفلت الملف هنا أو انقر للاختيار</p>
-            <p style="font-size: 0.9rem; color: var(--color-text-light); margin-top: 10px;" id="uploadHint">
-                الصور (JPG, PNG) أو ملفات PDF
-            </p>
-        </div>
-
-        <div class="file-info" id="fileInfo">
-            <div>
-                <strong id="fileName">اسم الملف:</strong>
-                <span id="fileDetails"></span>
-            </div>
-            <button onclick="clearFile()" style="background: var(--color-error); color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">
-                ✕
-            </button>
-        </div>
-
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text" id="progressText">0%</div>
-        </div>
-
-        <div class="controls">
-            <button onclick="processFile()" id="processBtn">استخراج النص</button>
-        </div>
-
-        <div class="spinner" id="spinner"></div>
-
-        <div class="output-section" id="outputSection">
-            <div class="output-tabs">
-                <button class="active" onclick="switchTab('text')">النص الخام</button>
-                <button onclick="switchTab('json')">JSON</button>
-                <button onclick="switchTab('csv')">CSV</button>
-            </div>
-
-            <div class="tab-content active" id="textTab">
-                <div class="output-box" id="textOutput"></div>
-            </div>
-
-            <div class="tab-content" id="jsonTab">
-                <div class="output-box" id="jsonOutput"></div>
-            </div>
-
-            <div class="tab-content" id="csvTab">
-                <div class="output-box" id="csvOutput"></div>
-            </div>
-
-            <div class="export-buttons">
-                <button onclick="exportData('txt')">💾 تحميل TXT</button>
-                <button onclick="exportData('json')">💾 تحميل JSON</button>
-                <button onclick="exportData('csv')">💾 تحميل CSV</button>
-                <button onclick="copyToClipboard()">📋 نسخ JSON</button>
-            </div>
-        </div>
-        v3
+    <!-- Background Decoration -->
+    <div class="bg-decoration">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <script>
-        // Configuration Constants
-        const CONFIG = {
-            MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
-            MAX_PDF_PAGES: 50,
-            ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/jpg'],
-            ALLOWED_PDF_TYPE: 'application/pdf',
-            API_TIMEOUT: 60000, // 60 seconds
-            MAX_RETRIES: 3,
-            RETRY_DELAY: 2000, // 2 seconds
-            BATCH_SIZE: 5, // Process 5 pages at a time
-            API_KEY: 'K89620932088957' // In production, move to backend
-        };
+    <!-- Language Toggle -->
+    <div class="language-toggle">
+        <button id="langToggle" class="lang-btn" onclick="switchLanguage()">
+            <i class="fas fa-language"></i>
+            <span id="langText">English</span>
+        </button>
+    </div>
 
-        // Translations
-        const translations = {
-            ar: {
-                title: 'استخراج النص المحسّن',
-                subtitle: 'نسخة محسّنة مع معالجة أخطاء متقدمة وأداء أفضل',
-                uploadText: 'اسحب وأفلت الملف هنا أو انقر للاختيار',
-                uploadHint: 'الصور (JPG, PNG) أو ملفات PDF',
-                processBtn: 'استخراج النص',
-                fileName: 'اسم الملف:',
-                fileLimits: '⚠️ الحد الأقصى: 50MB للملف | 50 صفحة للـ PDF | الصيغ المدعومة: JPG, PNG, PDF',
-                retryInfo: '🔄 جارٍ إعادة المحاولة...',
-                errorFileSize: 'حجم الملف كبير جداً! الحد الأقصى: 50MB',
-                errorFileType: 'نوع الملف غير مدعوم! استخدم JPG, PNG أو PDF',
-                errorPdfPages: 'عدد صفحات PDF يتجاوز الحد الأقصى (50 صفحة)',
-                errorNoFile: 'الرجاء اختيار ملف أولاً',
-                errorNetwork: 'خطأ في الاتصال. تحقق من الإنترنت',
-                errorTimeout: 'انتهت مهلة الطلب. حاول مرة أخرى',
-                errorGeneral: 'حدث خطأ: ',
-                successCopy: 'تم نسخ JSON إلى الحافظة!',
-                processingPage: 'معالجة صفحة {page} من {total}',
-                complete: 'اكتمل!'
-            },
-            en: {
-                title: 'Enhanced Text Extraction',
-                subtitle: 'Improved version with advanced error handling and better performance',
-                uploadText: 'Drag and drop file here or click to select',
-                uploadHint: 'Images (JPG, PNG) or PDF files',
-                processBtn: 'Extract Text',
-                fileName: 'File name:',
-                fileLimits: '⚠️ Limits: 50MB per file | 50 pages for PDF | Supported: JPG, PNG, PDF',
-                retryInfo: '🔄 Retrying...',
-                errorFileSize: 'File size too large! Maximum: 50MB',
-                errorFileType: 'Unsupported file type! Use JPG, PNG or PDF',
-                errorPdfPages: 'PDF pages exceed maximum limit (50 pages)',
-                errorNoFile: 'Please select a file first',
-                errorNetwork: 'Network error. Check your internet connection',
-                errorTimeout: 'Request timeout. Please try again',
-                errorGeneral: 'Error occurred: ',
-                successCopy: 'JSON copied to clipboard!',
-                processingPage: 'Processing page {page} of {total}',
-                complete: 'Complete!'
-            }
-        };
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-icon">
+                <i class="fas fa-file-image"></i>
+            </div>
+            <h1 id="mainTitle">مستخرج النصوص من الصور</h1>
+            <p id="mainSubtitle">تقنية OCR متقدمة لاستخراج النصوص العربية والإنجليزية</p>
+        </header>
 
-        let currentLang = 'ar';
-        let currentFile = null;
-        let extractedData = { text: '', json: null, csv: '' };
-
-        // Initialize
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        // Language Switching
-        function switchLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('htmlRoot').setAttribute('lang', lang);
-            document.getElementById('htmlRoot').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        <!-- Upload Card -->
+        <div class="glass-card upload-card">
+            <div class="card-header">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h2 id="uploadTitle">رفع الملف</h2>
+            </div>
             
-            const t = translations[lang];
-            document.getElementById('title').textContent = t.title;
-            document.getElementById('subtitle').textContent = t.subtitle;
-            document.getElementById('uploadText').textContent = t.uploadText;
-            document.getElementById('uploadHint').textContent = t.uploadHint;
-            document.getElementById('processBtn').textContent = t.processBtn;
-            document.getElementById('fileName').textContent = t.fileName;
-            document.getElementById('fileLimits').textContent = t.fileLimits;
-            document.getElementById('retryInfo').textContent = t.retryInfo;
-            
-            document.getElementById('langAr').classList.toggle('active', lang === 'ar');
-            document.getElementById('langEn').classList.toggle('active', lang === 'en');
-        }
-
-        // File Validation
-        function validateFile(file) {
-            const t = translations[currentLang];
-            
-            if (!file) {
-                throw new Error(t.errorNoFile);
-            }
-
-            // Check file size
-            if (file.size > CONFIG.MAX_FILE_SIZE) {
-                throw new Error(t.errorFileSize);
-            }
-
-            // Check file type
-            const isImage = CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type);
-            const isPdf = file.type === CONFIG.ALLOWED_PDF_TYPE;
-            
-            if (!isImage && !isPdf) {
-                throw new Error(t.errorFileType);
-            }
-
-            return { isImage, isPdf };
-        }
-
-        // Upload Area Events
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('drag-over');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('drag-over');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('drag-over');
-            
-            if (e.dataTransfer.files.length > 0) {
-                handleFileSelect(e.dataTransfer.files[0]);
-            }
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFileSelect(e.target.files[0]);
-            }
-        });
-
-        function handleFileSelect(file) {
-            try {
-                validateFile(file);
-                currentFile = file;
-                
-                const fileInfo = document.getElementById('fileInfo');
-                const fileDetails = document.getElementById('fileDetails');
-                
-                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                fileDetails.textContent = `${file.name} (${sizeMB} MB)`;
-                fileInfo.classList.add('active');
-                
-            } catch (error) {
-                showAlert(error.message, 'error');
-            }
-        }
-
-        function clearFile() {
-            currentFile = null;
-            fileInput.value = '';
-            document.getElementById('fileInfo').classList.remove('active');
-            document.getElementById('outputSection').classList.remove('active');
-        }
-
-        // Fetch with Retry and Timeout
-        async function fetchWithRetry(url, options, retries = CONFIG.MAX_RETRIES) {
-            const t = translations[currentLang];
-            
-            for (let i = 0; i < retries; i++) {
-                try {
-                    // Show retry info if not first attempt
-                    if (i > 0) {
-                        document.getElementById('retryInfo').classList.add('active');
-                        await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * Math.pow(2, i - 1)));
-                    }
-
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
-
-                    const response = await Promise.race([
-                        fetch(url, { ...options, signal: controller.signal }),
-                        new Promise((_, reject) =>
-                            setTimeout(() => reject(new Error(t.errorTimeout)), CONFIG.API_TIMEOUT)
-                        )
-                    ]);
-
-                    clearTimeout(timeoutId);
-                    document.getElementById('retryInfo').classList.remove('active');
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    return response;
-
-                } catch (error) {
-                    if (i === retries - 1) {
-                        document.getElementById('retryInfo').classList.remove('active');
-                        
-                        if (error.name === 'AbortError' || error.message.includes('timeout')) {
-                            throw new Error(t.errorTimeout);
-                        } else if (!navigator.onLine) {
-                            throw new Error(t.errorNetwork);
-                        }
-                        throw error;
-                    }
-                }
-            }
-        }
-
-        // OCR Processing with Enhanced Error Handling
-        async function runOCR(imageBlob) {
-            const formData = new FormData();
-            formData.append('file', imageBlob, 'image.png');
-            formData.append('isOverlayRequired', 'false');
-            formData.append('apikey', CONFIG.API_KEY);
-
-            const response = await fetchWithRetry(
-                'https://api.ocr.space/parse/image',
-                { method: 'POST', body: formData }
-            );
-
-            const result = await response.json();
-
-            if (result.IsErroredOnProcessing) {
-                throw new Error(result.ErrorMessage?.[0] || 'OCR processing failed');
-            }
-
-            return result.ParsedResults?.[0]?.ParsedText || '';
-        }
-
-        // PDF Processing with Batching
-        async function processPdfFile(file) {
-            const t = translations[currentLang];
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const totalPages = pdf.numPages;
-
-            // Validate page count
-            if (totalPages > CONFIG.MAX_PDF_PAGES) {
-                throw new Error(t.errorPdfPages);
-            }
-
-            let allText = '';
-            const batches = Math.ceil(totalPages / CONFIG.BATCH_SIZE);
-
-            for (let batch = 0; batch < batches; batch++) {
-                const startPage = batch * CONFIG.BATCH_SIZE + 1;
-                const endPage = Math.min((batch + 1) * CONFIG.BATCH_SIZE, totalPages);
-
-                // Process batch in parallel
-                const batchPromises = [];
-                for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-                    batchPromises.push(processPdfPage(pdf, pageNum, 'auto', totalPages));
-                }
-
-                const batchResults = await Promise.all(batchPromises);
-                allText += batchResults.join('\n\n');
-
-                // Update progress
-                const progress = Math.round((endPage / totalPages) * 100);
-                updateProgress(progress, t.processingPage.replace('{page}', endPage).replace('{total}', totalPages));
-            }
-
-            return allText;
-        }
-
-        async function processPdfPage(pdf, pageNum, language, totalPages) {
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 2 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-            const text = await runOCR(blob);
-
-            return text;
-        }
-
-        // Main Process Function
-        async function processFile() {
-            const t = translations[currentLang];
-
-            try {
-                if (!currentFile) {
-                    throw new Error(t.errorNoFile);
-                }
-
-                const { isImage, isPdf } = validateFile(currentFile);
-
-                // UI Updates
-                document.getElementById('processBtn').disabled = true;
-                document.getElementById('spinner').classList.add('active');
-                document.getElementById('progressContainer').classList.add('active');
-                updateProgress(0, '');
-
-                let extractedText = '';
-
-                if (isImage) {
-                    updateProgress(50, 'معالجة الصورة...');
-                    extractedText = await runOCR(currentFile);
-                    updateProgress(100, t.complete);
-                } else if (isPdf) {
-                    extractedText = await processPdfFile(currentFile);
-                }
-
-                // Process extracted text
-                extractedData.text = extractedText;
-                extractedData.json = buildEnhancedJson(extractedText);
-                extractedData.csv = jsonToCSV(extractedData.json);
-
-                // Display results
-                displayResults();
-                showAlert('تم استخراج النص بنجاح!', 'success');
-
-            } catch (error) {
-                console.error('Processing error:', error);
-                showAlert(t.errorGeneral + error.message, 'error');
-            } finally {
-                document.getElementById('processBtn').disabled = false;
-                document.getElementById('spinner').classList.remove('active');
-                document.getElementById('retryInfo').classList.remove('active');
-            }
-        }
-
-        // Enhanced Data Extraction with Multiple Patterns
-        function buildEnhancedJson(text) {
-            if (!text) return {};
-
-            const data = {};
-            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-
-            // Enhanced field patterns with multiple variations
-            const fieldPatterns = {
-                'company_name': [
-                    /(?:company|شركة|اسم الشركة|Company Name)[:\s]+([^\n]+)/i,
-                    /^([A-Z][A-Za-z\s&]+(?:LLC|Inc|Ltd|Corp)?)\s*$/m
-                ],
-                'certificate_number': [
-                    /(?:certificate|رقم الشهادة|Certificate No|Cert\s*#)[:\s]+([A-Z0-9\/-]+)/i,
-                    /(?:رقم|Number)[:\s]+([A-Z0-9\/-]+)/i
-                ],
-                'issue_date': [
-                    /(?:issue|issued|تاريخ الإصدار|Issue Date)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-                    /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/
-                ],
-                'expiry_date': [
-                    /(?:expiry|expires|expiration|تاريخ الانتهاء|Expiry Date)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-                    /(?:valid until|صالح حتى)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i
-                ],
-                'location': [
-                    /(?:location|موقع|address|عنوان)[:\s]+([^\n]+)/i
-                ],
-                'status': [
-                    /(?:status|حالة|الحالة)[:\s]+([^\n]+)/i
-                ]
-            };
-
-            // Extract data using multiple patterns
-            for (const [key, patterns] of Object.entries(fieldPatterns)) {
-                for (const pattern of patterns) {
-                    const match = text.match(pattern);
-                    if (match && match[1]) {
-                        data[key] = match[1].trim();
-                        break;
-                    }
-                }
-            }
-
-            // Add metadata
-            data.extraction_date = new Date().toISOString();
-            data.confidence = calculateConfidence(data);
-            data.raw_lines_count = lines.length;
-
-            return data;
-        }
-
-        function calculateConfidence(data) {
-            const requiredFields = ['company_name', 'certificate_number', 'expiry_date'];
-            const foundFields = requiredFields.filter(field => data[field]);
-            return Math.round((foundFields.length / requiredFields.length) * 100);
-        }
-
-        // JSON to CSV Conversion
-        function jsonToCSV(json) {
-            if (!json || Object.keys(json).length === 0) return '';
-
-            const headers = Object.keys(json).join(',');
-            const values = Object.values(json).map(v => `"${v}"`).join(',');
-
-            return `${headers}\n${values}`;
-        }
-
-        // Display Results
-        function displayResults() {
-            document.getElementById('textOutput').textContent = extractedData.text;
-            document.getElementById('jsonOutput').textContent = JSON.stringify(extractedData.json, null, 2);
-            document.getElementById('csvOutput').textContent = extractedData.csv;
-            document.getElementById('outputSection').classList.add('active');
-        }
-
-        // Tab Switching
-        function switchTab(tab) {
-            document.querySelectorAll('.output-tabs button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-            event.target.classList.add('active');
-            document.getElementById(`${tab}Tab`).classList.add('active');
-        }
-
-        // Export Functions
-        function exportData(format) {
-            let content, filename, mimeType;
-
-            switch (format) {
-                case 'txt':
-                    content = extractedData.text;
-                    filename = `extracted_text_${Date.now()}.txt`;
-                    mimeType = 'text/plain';
-                    break;
-                case 'json':
-                    content = JSON.stringify(extractedData.json, null, 2);
-                    filename = `extracted_data_${Date.now()}.json`;
-                    mimeType = 'application/json';
-                    break;
-                case 'csv':
-                    content = extractedData.csv;
-                    filename = `extracted_data_${Date.now()}.csv`;
-                    mimeType = 'text/csv';
-                    break;
-            }
-
-            const blob = new Blob([content], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function copyToClipboard() {
-            const t = translations[currentLang];
-            const jsonText = JSON.stringify(extractedData.json, null, 2);
-            navigator.clipboard.writeText(jsonText).then(() => {
-                showAlert(t.successCopy, 'success');
-            });
-        }
-
-        // Progress Update
-        function updateProgress(percent, message) {
-            document.getElementById('progressFill').style.width = `${percent}%`;
-            document.getElementById('progressText').textContent = message || `${percent}%`;
-        }
-
-        // Alert System
-        function showAlert(message, type = 'info') {
-            const alert = document.createElement('div');
-            alert.className = `alert ${type}`;
-            alert.textContent = message;
-            document.body.appendChild(alert);
-
-            setTimeout(() => {
-                alert.style.animation = 'slideIn 0.3s ease-out reverse';
-                setTimeout(() => alert.remove(), 300);
-            }, 4000);
-        }
-
-        // Initialize language on load
-        switchLanguage('ar');
-    </script>
+            <div class="upload-section">
+                <!-- File Upload -->
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept="image/*,.pdf" hidden>
+                    <label for="fileInput" class="upload-label">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="upload-text" id="uploadText">اسحب الملف هنا أو انقر للاختيار</p>
+                        <p class="upload-hint" id="uploadHint">يدعم الصور وملفات PDF</p>
+                        <div id="fileName" class="file-name"></div>
+                    </label>
+                </div>
+
+                <!-- URL Input -->
+                <div class="divider">
+                    <span id="orText">أو</span>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-link input-icon"></i>
+                    <input type="text" id="urlInput" class="modern-input" placeholder="أدخل رابط الصورة">
+                </div>
+
+                <!-- Language Select -->
+                <div class="form-group">
+                    <label id="ocrLangLabel" class="form-label">
+                        <i class="fas fa-globe"></i>
+                        لغة النص المراد استخراجه
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="ocrLanguage" class="modern-select">
+                            <option value="ara">العربية (Arabic)</option>
+                            <option value="eng">الإنجليزية (English)</option>
+                            <option value="ara,eng">العربية والإنجليزية (Both)</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-icon"></i>
+                    </div>
+                </div>
+
+                <!-- Process Button -->
+                <button id="processBtn" class="process-btn" onclick="runOCR()">
+                    <span class="btn-content">
+                        <i class="fas fa-magic"></i>
+                        <span id="processBtnText">استخراج النص</span>
+                    </span>
+                    <div class="btn-loader"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <!-- Extracted Text Card -->
+            <div class="glass-card result-card">
+                <div class="card-header">
+                    <div>
+                        <i class="fas fa-file-alt"></i>
+                        <h2 id="extractedTitle">النص المستخرج</h2>
+                    </div>
+                    <div class="card-actions">
+                        <button class="icon-btn" onclick="copyText()" title="نسخ">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="icon-btn" onclick="downloadFile('text')" title="تحميل">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <textarea id="extractedText" class="result-textarea" readonly></textarea>
+                </div>
+            </div>
+
+            <!-- Form Data Card -->
+            <div id="formDataCard" class="glass-card result-card" style="display: none;">
+                <div class="card-header">
+                    <div>
+                        <i class="fas fa-table"></i>
+                        <h2 id="formDataTitle">البيانات المستخرجة</h2>
+                    </div>
+                    <div class="card-actions">
+                        <button class="icon-btn" onclick="downloadFile('json')" title="تحميل JSON">
+                            <i class="fas fa-file-code"></i>
+                        </button>
+                        <button class="icon-btn" onclick="downloadFile('csv')" title="تحميل CSV">
+                            <i class="fas fa-file-csv"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <div id="formDisplay" class="form-display"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="alert-container"></div>
+
+    <script src="app.js"></script>
 </body>
 </html>
