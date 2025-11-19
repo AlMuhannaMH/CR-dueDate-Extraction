@@ -705,7 +705,6 @@
         async function runOCR(imageBlob) {
             const formData = new FormData();
             formData.append('file', imageBlob, 'image.png');
-            formData.append('language', 'auto');
             formData.append('isOverlayRequired', 'false');
             formData.append('apikey', CONFIG.API_KEY);
 
@@ -969,4 +968,5 @@
         switchLanguage('ar');
     </script>
 </body>
+v2
 </html>
