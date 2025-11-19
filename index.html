@@ -702,10 +702,10 @@
         }
 
         // OCR Processing with Enhanced Error Handling
-        async function runOCR(imageBlob, language) {
+        async function runOCR(imageBlob) {
             const formData = new FormData();
             formData.append('file', imageBlob, 'image.png');
-            formData.append('language', language);
+            formData.append('language', 'auto');
             formData.append('isOverlayRequired', 'false');
             formData.append('apikey', CONFIG.API_KEY);
 
@@ -724,7 +724,7 @@
         }
 
         // PDF Processing with Batching
-        async function processPdfFile(file, language) {
+        async function processPdfFile(file) {
             const t = translations[currentLang];
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -745,7 +745,7 @@
                 // Process batch in parallel
                 const batchPromises = [];
                 for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-                    batchPromises.push(processPdfPage(pdf, pageNum, language, totalPages));
+                    batchPromises.push(processPdfPage(pdf, pageNum, 'auto', totalPages));
                 }
 
                 const batchResults = await Promise.all(batchPromises);
@@ -771,7 +771,7 @@
             await page.render({ canvasContext: context, viewport: viewport }).promise;
 
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-            const text = await runOCR(blob, language);
+            const text = await runOCR(blob);
 
             return text;
         }
@@ -786,7 +786,6 @@
                 }
 
                 const { isImage, isPdf } = validateFile(currentFile);
-                const language = 'auto'; // Always use auto-detect
 
                 // UI Updates
                 document.getElementById('processBtn').disabled = true;
@@ -798,10 +797,10 @@
 
                 if (isImage) {
                     updateProgress(50, 'معالجة الصورة...');
-                    extractedText = await runOCR(currentFile, language);
+                    extractedText = await runOCR(currentFile);
                     updateProgress(100, t.complete);
                 } else if (isPdf) {
-                    extractedText = await processPdfFile(currentFile, language);
+                    extractedText = await processPdfFile(currentFile);
                 }
 
                 // Process extracted text
