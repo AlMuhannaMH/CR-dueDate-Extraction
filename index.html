@@ -459,10 +459,6 @@
         </div>
 
         <div class="controls">
-            <select id="languageSelect">
-                <option value="ara">العربية</option>
-                <option value="eng">English</option>
-            </select>
             <button onclick="processFile()" id="processBtn">استخراج النص</button>
         </div>
 
@@ -790,7 +786,7 @@
                 }
 
                 const { isImage, isPdf } = validateFile(currentFile);
-                const language = document.getElementById('languageSelect').value;
+                const language = 'auto'; // Always use auto-detect
 
                 // UI Updates
                 document.getElementById('processBtn').disabled = true;
