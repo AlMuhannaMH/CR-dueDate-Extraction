@@ -1,1112 +1,977 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="htmlRoot">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>استخراج النص وتحويله إلى JSON</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <style>
-    :root {
-      /* Brand colors - Arla-like */
-      --color-primary: #00843D; /* green */
-      --color-primary-600: #006f33;
-      --color-accent: #FFD100; /* yellow accent */
-      --color-background: #FFFFFF;
-      --color-surface: #FFFFFF;
-      --color-card-light: #F8FBFE;
-      --color-muted: #6B7280;
-      --color-text: #0b2b1c;
-      --color-border: rgba(11, 43, 28, 0.08);
-      --color-card-border: rgba(11, 43, 28, 0.06);
-      --color-shadow: rgba(11, 43, 28, 0.06);
-      --color-focus-ring: rgba(0,132,61,0.12);
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>استخراج النص المحسّن - Enhanced OCR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        :root {
+            --color-primary: #007a33;
+            --color-primary-dark: #004c99;
+            --color-secondary: #00a651;
+            --color-accent: #ffb81c;
+            --color-background: #ffffff;
+            --color-surface: #f8f9fa;
+            --color-text: #1a1a1a;
+            --color-text-light: #6c757d;
+            --color-border: #dee2e6;
+            --color-success: #28a745;
+            --color-warning: #ffc107;
+            --color-error: #dc3545;
+            --color-info: #17a2b8;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-      /* Typography */
-      --font-family-base: 'Tajawal', 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      --font-size-base: 15px;
-      --font-size-lg: 18px;
-      --font-size-3xl: 28px;
-      --font-weight-medium: 500;
-      --font-weight-bold: 700;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      /* Spacing & radius */
-      --space-8: 8px;
-      --space-12: 12px;
-      --space-16: 16px;
-      --space-20: 20px;
-      --space-24: 24px;
-      --radius-base: 10px;
-      --radius-lg: 14px;
+        body {
+            font-family: "Tajawal", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--color-text);
+        }
 
-      /* Shadows */
-      --shadow-sm: 0 4px 12px var(--color-shadow);
-      --shadow-md: 0 8px 24px rgba(11,43,28,0.04);
-      --shadow-lg: 0 10px 15px -3px rgba(11,43,28,0.04), 0 4px 6px -2px rgba(11,43,28,0.02);
-      --focus-ring: 0 0 0 4px var(--color-focus-ring);
-    }
+        .container {
+            background: var(--color-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideUp 0.5s ease-out;
+        }
 
-    /* Force a light theme (override OS dark mode) */
-    html, body { color-scheme: light; }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-    body {
-      font-family: var(--font-family-base);
-      background-color: var(--color-background);
-      color: var(--color-text);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      min-height: 100vh;
-      padding: var(--space-20);
-    }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
 
-    .app-container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
+        .language-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-    /* Header - Arla-like hero */
-    .app-header {
-      background: linear-gradient(90deg, rgba(0,132,61,0.03), rgba(255,209,0,0.02));
-      border-radius: var(--radius-lg);
-      padding: var(--space-24);
-      display: flex;
-      gap: var(--space-20);
-      align-items: center;
-      justify-content: space-between;
-      border: 1px solid var(--color-border);
-    }
+        .language-toggle button {
+            padding: 8px 20px;
+            border: 2px solid var(--color-primary);
+            background: transparent;
+            color: var(--color-primary);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
 
-    .header-left {
-      display: flex;
-      gap: var(--space-16);
-      align-items: center;
-    }
+        .language-toggle button.active {
+            background: var(--color-primary);
+            color: white;
+        }
 
-    .logo-placeholder {
-      width: 64px;
-      height: 64px;
-      border-radius: 12px;
-      background: linear-gradient(180deg, var(--color-primary), var(--color-primary-600));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: var(--font-weight-bold);
-      font-size: 20px;
-      box-shadow: var(--shadow-sm);
-    }
+        .upload-area {
+            border: 3px dashed var(--color-border);
+            border-radius: var(--border-radius);
+            padding: 60px 20px;
+            text-align: center;
+            background: var(--color-surface);
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 30px;
+            position: relative;
+        }
 
-    .app-header h1 {
-      font-size: var(--font-size-3xl);
-      font-weight: var(--font-weight-bold);
-      color: var(--color-text);
-      line-height: 1.1;
-    }
+        .upload-area:hover,
+        .upload-area.drag-over {
+            border-color: var(--color-primary);
+            background: rgba(0, 122, 51, 0.05);
+            transform: scale(1.02);
+        }
 
-    .app-header p {
-      color: var(--color-muted);
-      margin-top: 6px;
-      font-size: var(--font-size-base);
-    }
+        .upload-area input[type="file"] {
+            display: none;
+        }
 
-    .lang-area {
-      display: flex;
-      gap: var(--space-12);
-      align-items: center;
-    }
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--color-primary);
+        }
 
-    .btn-lang-toggle {
-      background: var(--color-primary);
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-weight: var(--font-weight-medium);
-      cursor: pointer;
-    }
+        .file-info {
+            background: var(--color-surface);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
 
-    .main-card {
-      margin-top: var(--space-20);
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--color-card-border);
-      padding: var(--space-24);
-      box-shadow: var(--shadow-md);
-    }
+        .file-info.active {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-    .file-upload-wrapper {
-      position: relative;
-      border: 1px dashed rgba(11,43,28,0.08);
-      border-radius: 12px;
-      padding: var(--space-20);
-      text-align: center;
-      background: linear-gradient(180deg, rgba(0,132,61,0.02), transparent);
-      transition: all 180ms ease;
-      cursor: pointer;
-    }
+        .file-limits {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
 
-    .file-upload-wrapper:hover {
-      border-color: var(--color-primary);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,132,61,0.06);
-    }
+        .progress-container {
+            display: none;
+            margin-bottom: 20px;
+        }
 
-    /* reduced upload icon size (was 56px) */
-    .upload-icon {
-      width: 44px;
-      height: 44px;
-      margin: 0 auto 12px;
-      color: var(--color-primary);
-    }
+        .progress-container.active {
+            display: block;
+        }
 
-    /* global small icon size used in headings/buttons */
-    svg.icon {
-      width: 20px;
-      height: 20px;
-      vertical-align: middle;
-      margin-inline-start: 8px;
-      flex: 0 0 20px;
-    }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--color-surface);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
 
-    /* smaller icons inside buttons */
-    .btn svg.icon {
-      width: 16px;
-      height: 16px;
-      margin-inline-start: 6px;
-    }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
 
-    .upload-text {
-      font-size: 16px;
-      color: var(--color-text);
-      font-weight: 600;
-    }
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+        }
 
-    .upload-hint {
-      color: var(--color-muted);
-      margin-top: 6px;
-      font-size: 13px;
-    }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
 
-    .form-input, .form-select {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: var(--font-size-base);
-      border-radius: 10px;
-      border: 1px solid var(--color-border);
-      background: #fff;
-      color: var(--color-text);
-    }
+        .controls select,
+        .controls button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 2px solid var(--color-border);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
 
-    .form-input:focus, .form-select:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: var(--focus-ring);
-    }
+        .controls button {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+            cursor: pointer;
+            font-weight: 600;
+        }
 
-    .form-select {
-      appearance: none;
-      background-image: none;
-      padding-left: 14px;
-    }
+        .controls button:hover:not(:disabled) {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
 
-    .button-group { display:flex; gap: 12px; margin-top: 12px; }
+        .controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
-    .btn {
-      padding: 12px 18px;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
+        .output-section {
+            display: none;
+        }
 
-    .btn-primary {
-      background: var(--color-primary);
-      color: white;
-      box-shadow: 0 8px 20px rgba(0,132,61,0.12);
-    }
+        .output-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
 
-    .btn-primary:hover { background: var(--color-primary-600); transform: translateY(-2px); }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
 
-    .btn-secondary {
-      background: white;
-      color: var(--color-text);
-      border: 1px solid var(--color-border);
-    }
+        .output-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--color-border);
+        }
 
-    .btn-danger { background: #E53E3E; color:white; }
+        .output-tabs button {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--color-text-light);
+            transition: var(--transition);
+        }
 
-    .btn-info { background: var(--color-accent); color: #1f1f1f; }
+        .output-tabs button.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
 
-    .result-card {
-      margin-top: var(--space-20);
-      background: linear-gradient(180deg, #fff, #fbfefb);
-      border-radius: 12px;
-      padding: var(--space-16);
-      border: 1px solid var(--color-card-border);
-    }
+        .tab-content {
+            display: none;
+        }
 
-    .result-text, .json-output, .form-display {
-      background: white;
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      padding: var(--space-12);
-      font-size: 14px;
-      color: var(--color-text);
-      max-height: 420px;
-      overflow: auto;
-    }
+        .tab-content.active {
+            display: block;
+        }
 
-    .form-display h4 {
-      margin-bottom: 12px;
-      color: var(--color-text);
-      font-size: 16px;
-    }
+        .output-box {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-    }
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
 
-    .form-field-value.empty { color: var(--color-muted); font-style: italic; }
+        .export-buttons button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 20px;
+            background: var(--color-secondary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
 
-    .save-buttons { margin-top: 16px; display:flex; gap:12px; flex-wrap:wrap; }
+        .export-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
 
-    .hidden { display: none !important; }
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            max-width: 400px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
 
-    @media (max-width: 640px) {
-      .app-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .button-group { flex-direction: column; }
-      .btn { width: 100%; justify-content: center; }
-    }
-  </style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert.success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .alert.error {
+            background: var(--color-error);
+            color: white;
+        }
+
+        .alert.info {
+            background: var(--color-info);
+            color: white;
+        }
+
+        .spinner {
+            display: none;
+            border: 4px solid var(--color-surface);
+            border-top: 4px solid var(--color-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        .spinner.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .retry-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .retry-info.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .controls select,
+            .controls button {
+                min-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="app-container">
-    <header class="app-header">
-      <div style="position: relative;">
-        <button id="langToggleBtn" class="btn-lang-toggle" aria-label="Toggle Language">
-          <span id="langToggleText">English</span>
-        </button>
-        <h1 id="headerTitle">استخراج النص وتحويله إلى JSON ديناميكي محسّن</h1>
-        <p id="headerSubtitle">قم برفع صورة أو ملف PDF لاستخراج النص وتحويله إلى بيانات منظمة</p>
-      </div>
-    </header>
-
-    <main class="main-card">
-      <div class="form-section">
-        <label class="form-label" id="fileUploadLabel">رفع صورة أو ملف PDF</label>
-        <div class="file-upload-wrapper">
-          <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp,.pdf">
-          <div class="file-upload-content">
-            <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-            </svg>
-            <div class="upload-text" id="uploadText">اضغط لرفع ملف أو اسحبه هنا</div>
-            <div class="upload-hint" id="uploadHint">PNG, JPG, JPEG, WEBP, PDF</div>
-          </div>
+    <div class="container">
+        <div class="header">
+            <h1 id="title">استخراج النص المحسّن</h1>
+            <p id="subtitle">نسخة محسّنة مع معالجة أخطاء متقدمة وأداء أفضل</p>
         </div>
-      </div>
 
-      <div class="divider" id="dividerText">أو</div>
-
-      <div class="form-section">
-        <label class="form-label" for="urlInput" id="urlInputLabel">أدخل رابط الصورة</label>
-        <input type="text" id="urlInput" class="form-input" placeholder="https://example.com/image.jpg">
-      </div>
-
-      <div class="form-section">
-        <label class="form-label" for="language" id="languageSelectorLabel">اختر اللغة</label>
-        <select id="language" class="form-select">
-          <option value="auto" id="langOptAuto">كشف تلقائي</option>
-          <option value="eng" id="langOptEng">الإنجليزية</option>
-          <option value="ara" id="langOptAra">العربية</option>
-        </select>
-      </div>
-
-      <div class="button-group">
-        <button id="startBtn" class="btn btn-primary btn-full">
-          <span id="startBtnText">ابدأ التحويل</span>
-          <div id="loadingSpinner" class="loading-spinner hidden"></div>
-        </button>
-      </div>
-
-      <div class="button-group" style="margin-top: var(--space-12);">
-        <button id="clearBtn" class="btn btn-danger" style="flex: 1;" data-text-key="button_clear">مسح</button>
-        <button id="downloadTxtBtn" class="btn btn-info hidden" style="flex: 1;" data-text-key="button_download_txt">تحميل النص</button>
-        <button id="downloadJsonBtn" class="btn btn-secondary hidden" style="flex: 1;" data-text-key="button_download_json">تحميل JSON</button>
-      </div>
-    </main>
-
-    <div id="alertContainer"></div>
-
-    <div id="resultContainer" class="hidden">
-      <div class="result-card">
-        <h3>
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          <span id="extractedTextHeading">النص المستخرج</span>
-        </h3>
-        <div id="resultText" class="result-text"></div>
-      </div>
-
-      <div class="result-card">
-        <h3>
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          <span id="formHeading">المعلومات المستخرجة</span>
-        </h3>
-        <div id="formDisplay" class="form-display"></div>
-        <div class="save-buttons">
-          <button id="saveJsonBtn" class="btn btn-success">
-            <span id="saveJsonText">حفظ JSON</span>
-          </button>
-          <button id="saveCsvBtn" class="btn btn-info">
-            <span id="saveCsvText">حفظ CSV</span>
-          </button>
-          <button id="copyBtn" class="btn btn-secondary">
-            <span id="copyText">نسخ إلى الحافظة</span>
-          </button>
+        <div class="language-toggle">
+            <button onclick="switchLanguage('ar')" class="active" id="langAr">العربية</button>
+            <button onclick="switchLanguage('en')" id="langEn">English</button>
         </div>
-      </div>
 
-      <div class="result-card">
-        <h3>
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-          </svg>
-          <span id="dynamicJsonHeading">JSON ديناميكي محسّن</span>
-        </h3>
-        <div id="jsonOutput" class="json-output"></div>
-      </div>
-    </div>
-  </div>
+        <div class="file-limits" id="fileLimits">
+            ⚠️ الحد الأقصى: 50MB للملف | 50 صفحة للـ PDF | الصيغ المدعومة: JPG, PNG, PDF
+        </div>
 
-  <script>
-    // Translation system
-    const translations = {
-      en: {
-        header_title: "Extract Text and Convert to Dynamic JSON",
-        header_subtitle: "Upload an image or PDF file to extract text and convert it to structured data",
-        file_upload_label: "Upload Image or PDF File:",
-        upload_text: "Click to upload or drag and drop here",
-        upload_hint: "PNG, JPG, JPEG, WEBP, PDF",
-        divider: "OR",
-        url_input_label: "Or Enter Image URL:",
-        url_placeholder: "https://example.com/image.jpg",
-        language_selector_label: "Select Language:",
-        language_auto: "Auto-Detect",
-        language_eng: "English",
-        language_ara: "Arabic",
-        button_start: "Start Conversion",
-        button_start_loading: "Processing...",
-        button_clear: "Clear",
-        button_download_txt: "Download as TXT",
-        button_download_json: "Download as JSON",
-        button_save_json: "Save as JSON",
-        button_save_csv: "Save as CSV",
-        button_copy: "Copy to Clipboard",
-        form_heading: "Extracted Information",
-        not_found: "Not Found",
-        copied_success: "Copied to clipboard!",
-        saved_success: "File saved successfully!",
-        cert_info: "Certificate Information",
-        basic_info: "Basic Information",
-        validity_period: "Validity Period",
-        financial_info: "Financial Information",
-        manager_info: "Manager Information",
-        issuing_authority: "Issuing Authority",
-        certificate_type: "Certificate Type",
-        city: "City",
-        issue_date: "Issue Date",
-        receipt_number: "Receipt Number",
-        unified_number: "Unified Number",
-        establishment_number: "Establishment Number",
-        company_name: "Company Name",
-        company_nationality: "Company Nationality",
-        start_date: "Start Date",
-        expiry_date: "Expiry Date",
-        invested_capital: "Invested Capital",
-        manager_name: "Manager Name",
-        passport_id: "Passport/ID Number",
-        extracted_text_heading: "Extracted Text:",
-        dynamic_json_heading: "Dynamic JSON:",
-        no_text_found: "No text found.",
-        processing: "Processing image...",
-        error_message: "An error occurred during processing.",
-        error_select_file: "Please upload a file or enter an image URL.",
-        alert_file_selected: "File selected: ",
-        alert_clear: "All data cleared.",
-        alert_download_txt: "Text file downloaded.",
-        alert_download_json: "JSON file downloaded.",
-        alert_success: "Text extracted successfully!",
-        alert_no_text: "No text found in the image.",
-        alert_extraction_failed: "Failed to extract text from the image.",
-        pdf_converting: "Converting PDF to images...",
-        pdf_processing_page: "Processing page",
-        pdf_of: "of",
-        pdf_success: "PDF processed successfully.",
-        pdf_error: "Error processing PDF file."
-      },
-      ar: {
-        header_title: "استخراج النص وتحويله إلى JSON ديناميكي محسّن",
-        header_subtitle: "قم برفع صورة أو ملف PDF لاستخراج النص وتحويله إلى بيانات منظمة",
-        file_upload_label: "رفع صورة أو ملف PDF:",
-        upload_text: "اضغط لرفع ملف أو اسحبه هنا",
-        upload_hint: "PNG, JPG, JPEG, WEBP, PDF",
-        divider: "أو",
-        url_input_label: "أو أدخل رابط الصورة:",
-        url_placeholder: "https://example.com/image.jpg",
-        language_selector_label: "اختر اللغة:",
-        language_auto: "كشف تلقائي",
-        language_eng: "الإنجليزية",
-        language_ara: "العربية",
-        button_start: "ابدأ التحويل",
-        button_start_loading: "جاري المعالجة...",
-        button_clear: "مسح",
-        button_download_txt: "تحميل النص",
-        button_download_json: "تحميل JSON",
-        button_save_json: "حفظ JSON",
-        button_save_csv: "حفظ CSV",
-        button_copy: "نسخ إلى الحافظة",
-        form_heading: "المعلومات المستخرجة",
-        not_found: "غير محدد",
-        copied_success: "تم النسخ إلى الحافظة!",
-        saved_success: "تم حفظ الملف بنجاح!",
-        cert_info: "معلومات الشهادة",
-        basic_info: "المعلومات الأساسية",
-        validity_period: "فترة الصلاحية",
-        financial_info: "المعلومات المالية",
-        manager_info: "معلومات المدير",
-        issuing_authority: "جهة الإصدار",
-        certificate_type: "نوع الشهادة",
-        city: "المدينة",
-        issue_date: "تاريخ الإصدار",
-        receipt_number: "رقم الإيصال",
-        unified_number: "الرقم الموحد",
-        establishment_number: "رقم المنشأة",
-        company_name: "اسم الشركة",
-        company_nationality: "جنسية الشركة",
-        start_date: "تاريخ البداية",
-        expiry_date: "تاريخ الانتهاء",
-        invested_capital: "مقدار المال المستثمر",
-        manager_name: "اسم المدير",
-        passport_id: "رقم الجواز أو الحفيظة",
-        extracted_text_heading: "النص المستخرج:",
-        dynamic_json_heading: "JSON ديناميكي محسّن:",
-        no_text_found: "لم يتم العثور على نص.",
-        processing: "جاري معالجة الصورة...",
-        error_message: "حدث خطأ أثناء المعالجة.",
-        error_select_file: "يرجى رفع ملف أو إدخل رابط الصورة.",
-        alert_file_selected: "تم اختيار الملف: ",
-        alert_clear: "تم مسح جميع البيانات.",
-        alert_download_txt: "تم تحميل ملف النص.",
-        alert_download_json: "تم تحميل ملف JSON.",
-        alert_success: "تم استخراج النص بنجاح!",
-        alert_no_text: "لم يتم العثور على نص في الصورة.",
-        alert_extraction_failed: "فشل استخراج النص من الصورة.",
-        pdf_converting: "تحويل ملف PDF إلى صور...",
-        pdf_processing_page: "معالجة الصفحة",
-        pdf_of: "من",
-        pdf_success: "تم معالجة ملف PDF بنجاح.",
-        pdf_error: "خطأ في معالجة ملف PDF."
-      }
-    };
+        <div class="retry-info" id="retryInfo">
+            🔄 جارٍ إعادة المحاولة...
+        </div>
 
-    let currentLang = 'ar';
-    let extractedText = '';
-    let generatedJson = {};
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" accept="image/*,application/pdf" />
+            <div class="upload-icon">📁</div>
+            <p id="uploadText">اسحب وأفلت الملف هنا أو انقر للاختيار</p>
+            <p style="font-size: 0.9rem; color: var(--color-text-light); margin-top: 10px;" id="uploadHint">
+                الصور (JPG, PNG) أو ملفات PDF
+            </p>
+        </div>
 
-    // Initialize PDF.js
-    if (typeof pdfjsLib !== 'undefined') {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
-
-    function switchLanguage(lang) {
-      currentLang = lang;
-      const htmlRoot = document.getElementById('htmlRoot');
-      const t = translations[lang];
-      
-      // Update HTML attributes
-      htmlRoot.setAttribute('lang', lang);
-      htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-      
-      // Update all text content
-      document.getElementById('headerTitle').textContent = t.header_title;
-      document.getElementById('headerSubtitle').textContent = t.header_subtitle;
-      document.getElementById('fileUploadLabel').textContent = t.file_upload_label;
-      document.getElementById('uploadText').textContent = t.upload_text;
-      document.getElementById('uploadHint').textContent = t.upload_hint;
-      document.getElementById('dividerText').textContent = t.divider;
-      document.getElementById('urlInputLabel').textContent = t.url_input_label;
-      document.getElementById('urlInput').placeholder = t.url_placeholder;
-      document.getElementById('languageSelectorLabel').textContent = t.language_selector_label;
-      document.getElementById('langOptAuto').textContent = t.language_auto;
-      document.getElementById('langOptEng').textContent = t.language_eng;
-      document.getElementById('langOptAra').textContent = t.language_ara;
-      document.getElementById('startBtnText').textContent = t.button_start;
-      document.getElementById('clearBtn').textContent = t.button_clear;
-      document.getElementById('downloadTxtBtn').textContent = t.button_download_txt;
-      document.getElementById('downloadJsonBtn').textContent = t.button_download_json;
-      document.getElementById('extractedTextHeading').textContent = t.extracted_text_heading;
-      document.getElementById('formHeading').textContent = t.form_heading;
-      document.getElementById('dynamicJsonHeading').textContent = t.dynamic_json_heading;
-      document.getElementById('saveJsonText').textContent = t.button_save_json;
-      document.getElementById('saveCsvText').textContent = t.button_save_csv;
-      document.getElementById('copyText').textContent = t.button_copy;
-      
-      // Update toggle button text to show opposite language
-      document.getElementById('langToggleText').textContent = lang === 'ar' ? 'English' : 'العربية';
-    }
-
-    function showAlert(message, type = 'info') {
-      const alertContainer = document.getElementById('alertContainer');
-      const alert = document.createElement('div');
-      alert.className = `alert alert-${type}`;
-      
-      const icon = type === 'error' 
-        ? '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
-        : type === 'success'
-        ? '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
-        : '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-      
-      alert.innerHTML = icon + '<span>' + message + '</span>';
-      alertContainer.appendChild(alert);
-      
-      setTimeout(() => {
-        alert.remove();
-      }, 5000);
-    }
-
-    function setLoading(isLoading) {
-      const startBtn = document.getElementById('startBtn');
-      const startBtnText = document.getElementById('startBtnText');
-      const loadingSpinner = document.getElementById('loadingSpinner');
-      
-      const t = translations[currentLang];
-      
-      if (isLoading) {
-        startBtn.disabled = true;
-        startBtnText.textContent = t.button_start_loading;
-        loadingSpinner.classList.remove('hidden');
-      } else {
-        startBtn.disabled = false;
-        startBtnText.textContent = t.button_start;
-        loadingSpinner.classList.add('hidden');
-      }
-    }
-
-    async function convertPdfPageToImage(pdf, pageNum) {
-      try {
-        console.log(`Converting PDF page ${pageNum} to image...`);
-        const page = await pdf.getPage(pageNum);
-        const scale = 2;
-        const viewport = page.getViewport({ scale });
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        
-        await page.render({
-          canvasContext: context,
-          viewport: viewport
-        }).promise;
-        
-        console.log(`Page ${pageNum} rendered to canvas successfully`);
-        
-        return new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {
-            if (blob) {
-              console.log(`Page ${pageNum} converted to blob:`, blob.size, 'bytes');
-              resolve(blob);
-            } else {
-              reject(new Error('Failed to convert canvas to blob'));
-            }
-          }, 'image/jpeg', 0.95);
-        });
-      } catch (error) {
-        console.error(`Error converting page ${pageNum}:`, error);
-        throw error;
-      }
-    }
-
-    async function processPdfFile(file, language) {
-      const t = translations[currentLang];
-      
-      try {
-        console.log('Starting PDF processing...', file.name);
-        showAlert(t.pdf_converting, 'info');
-        
-        const arrayBuffer = await file.arrayBuffer();
-        console.log('PDF loaded as array buffer, size:', arrayBuffer.byteLength);
-        
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const totalPages = pdf.numPages;
-        console.log('PDF loaded successfully. Total pages:', totalPages);
-        
-        let allText = '';
-        
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-          console.log(`Processing page ${pageNum} of ${totalPages}...`);
-          showAlert(`${t.pdf_processing_page} ${pageNum} ${t.pdf_of} ${totalPages}`, 'info');
-          
-          try {
-            const imageBlob = await convertPdfPageToImage(pdf, pageNum);
-            console.log(`Page ${pageNum} converted to image blob`);
-            
-            const ocrResult = await runOCROnImage(imageBlob, language);
-            console.log(`OCR result for page ${pageNum}:`, ocrResult);
-            
-            if (ocrResult && ocrResult.ParsedResults && ocrResult.ParsedResults[0]) {
-              const pageText = ocrResult.ParsedResults[0].ParsedText.trim();
-              if (pageText) {
-                allText += pageText + '\n\n';
-                console.log(`Page ${pageNum} text extracted:`, pageText.substring(0, 100) + '...');
-              }
-            } else {
-              console.warn(`No text found on page ${pageNum}`);
-            }
-          } catch (pageError) {
-            console.error(`Error processing page ${pageNum}:`, pageError);
-          }
-        }
-        
-        console.log('PDF processing complete. Total text length:', allText.length);
-        return allText.trim();
-      } catch (error) {
-        console.error('PDF processing error:', error);
-        throw new Error(t.pdf_error + ': ' + error.message);
-      }
-    }
-
-    async function runOCROnImage(fileOrBlob, language) {
-      const formData = new FormData();
-      formData.append('apikey', 'K89620932088957');
-      formData.append('OCREngine', '2');
-      formData.append('language', language);
-      formData.append('file', fileOrBlob, 'image.jpg');
-
-      try {
-        console.log('Sending OCR request...', { language, blobSize: fileOrBlob.size });
-        const response = await fetch('https://api.ocr.space/parse/image', {
-          method: 'POST',
-          body: formData,
-        });
-        const result = await response.json();
-        console.log('OCR response received:', result);
-        return result;
-      } catch (error) {
-        console.error('OCR request error:', error);
-        const t = translations[currentLang];
-        throw new Error(t.error_message);
-      }
-    }
-
-    async function runOCR() {
-      const file = document.getElementById('fileInput').files[0];
-      const url = document.getElementById('urlInput').value.trim();
-      const language = document.getElementById('language').value;
-      const t = translations[currentLang];
-
-      if (!file && !url) {
-        showAlert(t.error_select_file, 'error');
-        return null;
-      }
-
-      // Check if file is a PDF
-      if (file && file.type === 'application/pdf') {
-        return await processPdfFile(file, language);
-      }
-
-      // Process regular image file or URL
-      const formData = new FormData();
-      formData.append('apikey', 'K89620932088957');
-      formData.append('OCREngine', '2');
-      formData.append('language', language);
-
-      if (file) formData.append('file', file);
-      else formData.append('url', url);
-
-      try {
-        const response = await fetch('https://api.ocr.space/parse/image', {
-          method: 'POST',
-          body: formData,
-        });
-        return response.json();
-      } catch (error) {
-        throw new Error(t.error_message);
-      }
-    }
-
-    function normalizeArabicNumbers(str) {
-      const arabicNums = {
-        '٠': '0',
-        '١': '1',
-        '٢': '2',
-        '٣': '3',
-        '٤': '4',
-        '٥': '5',
-        '٦': '6',
-        '٧': '7',
-        '٨': '8',
-        '٩': '9',
-      };
-      return str.replace(/[٠-٩]/g, (d) => arabicNums[d]);
-    }
-
-    function extractField(text, patterns) {
-      for (let pattern of patterns) {
-        const match = text.match(pattern);
-        if (match && match[1]) {
-          return match[1].trim();
-        }
-      }
-      return 'غير محدد';
-    }
-
-    function buildDynamicJson(text) {
-      // Normalize Arabic numbers FIRST
-      text = normalizeArabicNumbers(text);
-
-      // Extract Unified Number with multiple patterns
-      const unifiedNumberPatterns = [
-        /الرقم\s+الموحد[:\s]+([0-9]+)/,
-        /الموحد[:\s]+([0-9]+)/,
-        /موحد[:\s]+([0-9]+)/
-      ];
-      const unifiedNumber = extractField(text, unifiedNumberPatterns);
-
-      // Extract Establishment Number with multiple patterns
-      const establishmentNumberPatterns = [
-        /رقم\s+المنشأة[:\s]+([0-9]+)/,
-        /المنشأة[:\s]+([0-9]+)/,
-        /منشأة[:\s]+([0-9]+)/
-      ];
-      const establishmentNumber = extractField(text, establishmentNumberPatterns);
-
-      // Extract Company Name with multiple patterns
-      const companyNamePatterns = [
-        /(?:اسم\s+)?(?:الشركة|الشركة\s+الأجنبية)[:\s]+(.+?)(?=\n|رقم|$)/,
-        /الشركة[:\s]+([^\n]+)/,
-        /فرع\s+(.+?)(?=\n|رقم|$)/
-      ];
-      const companyName = extractField(text, companyNamePatterns);
-
-      // Extract all dates
-      const dates = text.match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/g) || [];
-      
-      // Extract Invested Capital
-      const investedCapitalPatterns = [
-        /مقدار\s+المال\s+المستثمر[:\s]+([0-9,]+)/,
-        /المال\s+المستثمر[:\s]+([0-9,]+)/
-      ];
-      const investedCapital = extractField(text, investedCapitalPatterns);
-
-      // Extract Passport Number
-      const passportNumberPatterns = [
-        /(?:رقم\s+)?(?:الحفيظة|الجواز)[:\s]+([0-9]+)/,
-        /الجواز[:\s]+([0-9]+)/,
-        /الحفيظة[:\s]+([0-9]+)/
-      ];
-      const passportNumber = extractField(text, passportNumberPatterns);
-
-      // Extract Manager Name
-      const managerNamePatterns = [
-        /(?:مدير|المدير)[:\s]+(.+?)(?=\n|رقم|$)/,
-        /المدير[:\s]+([^\n]+)/
-      ];
-      const managerName = extractField(text, managerNamePatterns);
-
-      // Extract Receipt Number
-      const receiptNumberPatterns = [
-        /الإيصال\s+رقم[:\s]+([0-9]+)/,
-        /إيصال[:\s]+([0-9]+)/
-      ];
-      const receiptNumber = extractField(text, receiptNumberPatterns);
-
-      return {
-        certificate: {
-          issuing_authority: 'وزارة التجارة',
-          certificate_type: 'شهادة تسجيل فرع شركة أجنبية',
-          city: text.includes('الرياض') ? 'الرياض' : 'غير محدد',
-          issue_date: dates.length >= 2 ? dates[1] : (dates.length >= 1 ? dates[0] : 'غير محدد'),
-          receipt_number: receiptNumber,
-        },
-        basic_information: {
-          unified_number: unifiedNumber,
-          establishment_number: establishmentNumber,
-          company_name: companyName,
-          company_nationality: text.includes('لبناني') ? 'لبناني' : 'غير محدد',
-        },
-        validity_period: {
-          start_date: dates.length >= 1 ? dates[0] : 'غير محدد',
-          expiry_date: dates.length >= 3 ? dates[dates.length - 1] : (dates.length >= 2 ? dates[dates.length - 1] : 'غير محدد'),
-        },
-        financial_information: {
-          invested_capital: investedCapital,
-        },
-        manager_information: {
-          name: managerName,
-          passport_or_id_number: passportNumber,
-        },
-      };
-    }
-
-    function renderFormDisplay(jsonData) {
-      const t = translations[currentLang];
-      const formDisplay = document.getElementById('formDisplay');
-      const notFound = t.not_found;
-      
-      const sections = [
-        {
-          title: t.cert_info,
-          fields: [
-            { label: t.issuing_authority, value: jsonData.certificate.issuing_authority },
-            { label: t.certificate_type, value: jsonData.certificate.certificate_type },
-            { label: t.city, value: jsonData.certificate.city },
-            { label: t.issue_date, value: jsonData.certificate.issue_date },
-            { label: t.receipt_number, value: jsonData.certificate.receipt_number }
-          ]
-        },
-        {
-          title: t.basic_info,
-          fields: [
-            { label: t.unified_number, value: jsonData.basic_information.unified_number },
-            { label: t.establishment_number, value: jsonData.basic_information.establishment_number },
-            { label: t.company_name, value: jsonData.basic_information.company_name },
-            { label: t.company_nationality, value: jsonData.basic_information.company_nationality }
-          ]
-        },
-        {
-          title: t.validity_period,
-          fields: [
-            { label: t.start_date, value: jsonData.validity_period.start_date },
-            { label: t.expiry_date, value: jsonData.validity_period.expiry_date }
-          ]
-        },
-        {
-          title: t.financial_info,
-          fields: [
-            { label: t.invested_capital, value: jsonData.financial_information.invested_capital }
-          ]
-        },
-        {
-          title: t.manager_info,
-          fields: [
-            { label: t.manager_name, value: jsonData.manager_information.name },
-            { label: t.passport_id, value: jsonData.manager_information.passport_or_id_number }
-          ]
-        }
-      ];
-      
-      let html = '';
-      sections.forEach(section => {
-        html += `<h4>${section.title}</h4><div class="form-grid">`;
-        section.fields.forEach(field => {
-          const isEmpty = !field.value || field.value === 'غير محدد' || field.value === 'Not Found';
-          html += `
-            <div class="form-field">
-              <div class="form-field-label">${field.label}</div>
-              <div class="form-field-value ${isEmpty ? 'empty' : ''}">${isEmpty ? notFound : field.value}</div>
+        <div class="file-info" id="fileInfo">
+            <div>
+                <strong id="fileName">اسم الملف:</strong>
+                <span id="fileDetails"></span>
             </div>
-          `;
+            <button onclick="clearFile()" style="background: var(--color-error); color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">
+                ✕
+            </button>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+
+        <div class="controls">
+            <select id="languageSelect">
+                <option value="ara">العربية</option>
+                <option value="eng">English</option>
+            </select>
+            <button onclick="processFile()" id="processBtn">استخراج النص</button>
+        </div>
+
+        <div class="spinner" id="spinner"></div>
+
+        <div class="output-section" id="outputSection">
+            <div class="output-tabs">
+                <button class="active" onclick="switchTab('text')">النص الخام</button>
+                <button onclick="switchTab('json')">JSON</button>
+                <button onclick="switchTab('csv')">CSV</button>
+            </div>
+
+            <div class="tab-content active" id="textTab">
+                <div class="output-box" id="textOutput"></div>
+            </div>
+
+            <div class="tab-content" id="jsonTab">
+                <div class="output-box" id="jsonOutput"></div>
+            </div>
+
+            <div class="tab-content" id="csvTab">
+                <div class="output-box" id="csvOutput"></div>
+            </div>
+
+            <div class="export-buttons">
+                <button onclick="exportData('txt')">💾 تحميل TXT</button>
+                <button onclick="exportData('json')">💾 تحميل JSON</button>
+                <button onclick="exportData('csv')">💾 تحميل CSV</button>
+                <button onclick="copyToClipboard()">📋 نسخ JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration Constants
+        const CONFIG = {
+            MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
+            MAX_PDF_PAGES: 50,
+            ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/jpg'],
+            ALLOWED_PDF_TYPE: 'application/pdf',
+            API_TIMEOUT: 60000, // 60 seconds
+            MAX_RETRIES: 3,
+            RETRY_DELAY: 2000, // 2 seconds
+            BATCH_SIZE: 5, // Process 5 pages at a time
+            API_KEY: 'K89620932088957' // In production, move to backend
+        };
+
+        // Translations
+        const translations = {
+            ar: {
+                title: 'استخراج النص المحسّن',
+                subtitle: 'نسخة محسّنة مع معالجة أخطاء متقدمة وأداء أفضل',
+                uploadText: 'اسحب وأفلت الملف هنا أو انقر للاختيار',
+                uploadHint: 'الصور (JPG, PNG) أو ملفات PDF',
+                processBtn: 'استخراج النص',
+                fileName: 'اسم الملف:',
+                fileLimits: '⚠️ الحد الأقصى: 50MB للملف | 50 صفحة للـ PDF | الصيغ المدعومة: JPG, PNG, PDF',
+                retryInfo: '🔄 جارٍ إعادة المحاولة...',
+                errorFileSize: 'حجم الملف كبير جداً! الحد الأقصى: 50MB',
+                errorFileType: 'نوع الملف غير مدعوم! استخدم JPG, PNG أو PDF',
+                errorPdfPages: 'عدد صفحات PDF يتجاوز الحد الأقصى (50 صفحة)',
+                errorNoFile: 'الرجاء اختيار ملف أولاً',
+                errorNetwork: 'خطأ في الاتصال. تحقق من الإنترنت',
+                errorTimeout: 'انتهت مهلة الطلب. حاول مرة أخرى',
+                errorGeneral: 'حدث خطأ: ',
+                successCopy: 'تم نسخ JSON إلى الحافظة!',
+                processingPage: 'معالجة صفحة {page} من {total}',
+                complete: 'اكتمل!'
+            },
+            en: {
+                title: 'Enhanced Text Extraction',
+                subtitle: 'Improved version with advanced error handling and better performance',
+                uploadText: 'Drag and drop file here or click to select',
+                uploadHint: 'Images (JPG, PNG) or PDF files',
+                processBtn: 'Extract Text',
+                fileName: 'File name:',
+                fileLimits: '⚠️ Limits: 50MB per file | 50 pages for PDF | Supported: JPG, PNG, PDF',
+                retryInfo: '🔄 Retrying...',
+                errorFileSize: 'File size too large! Maximum: 50MB',
+                errorFileType: 'Unsupported file type! Use JPG, PNG or PDF',
+                errorPdfPages: 'PDF pages exceed maximum limit (50 pages)',
+                errorNoFile: 'Please select a file first',
+                errorNetwork: 'Network error. Check your internet connection',
+                errorTimeout: 'Request timeout. Please try again',
+                errorGeneral: 'Error occurred: ',
+                successCopy: 'JSON copied to clipboard!',
+                processingPage: 'Processing page {page} of {total}',
+                complete: 'Complete!'
+            }
+        };
+
+        let currentLang = 'ar';
+        let currentFile = null;
+        let extractedData = { text: '', json: null, csv: '' };
+
+        // Initialize
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Language Switching
+        function switchLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('htmlRoot').setAttribute('lang', lang);
+            document.getElementById('htmlRoot').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            
+            const t = translations[lang];
+            document.getElementById('title').textContent = t.title;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('uploadText').textContent = t.uploadText;
+            document.getElementById('uploadHint').textContent = t.uploadHint;
+            document.getElementById('processBtn').textContent = t.processBtn;
+            document.getElementById('fileName').textContent = t.fileName;
+            document.getElementById('fileLimits').textContent = t.fileLimits;
+            document.getElementById('retryInfo').textContent = t.retryInfo;
+            
+            document.getElementById('langAr').classList.toggle('active', lang === 'ar');
+            document.getElementById('langEn').classList.toggle('active', lang === 'en');
+        }
+
+        // File Validation
+        function validateFile(file) {
+            const t = translations[currentLang];
+            
+            if (!file) {
+                throw new Error(t.errorNoFile);
+            }
+
+            // Check file size
+            if (file.size > CONFIG.MAX_FILE_SIZE) {
+                throw new Error(t.errorFileSize);
+            }
+
+            // Check file type
+            const isImage = CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type);
+            const isPdf = file.type === CONFIG.ALLOWED_PDF_TYPE;
+            
+            if (!isImage && !isPdf) {
+                throw new Error(t.errorFileType);
+            }
+
+            return { isImage, isPdf };
+        }
+
+        // Upload Area Events
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
         });
-        html += '</div>';
-      });
-      
-      formDisplay.innerHTML = html;
-    }
 
-    function downloadFile(content, filename, type) {
-      const blob = new Blob([content], { type });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }
-
-    function getTimestamp() {
-      const now = new Date();
-      return now.toISOString().replace(/[:.-]/g, '').substring(0, 15);
-    }
-
-    function convertToCSV(jsonData) {
-      const rows = [];
-      rows.push(['Section', 'Field', 'Value']);
-      
-      const addSection = (sectionName, data) => {
-        Object.entries(data).forEach(([key, value]) => {
-          rows.push([sectionName, key.replace(/_/g, ' '), value]);
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
         });
-      };
-      
-      addSection('Certificate', jsonData.certificate);
-      addSection('Basic Information', jsonData.basic_information);
-      addSection('Validity Period', jsonData.validity_period);
-      addSection('Financial Information', jsonData.financial_information);
-      addSection('Manager Information', jsonData.manager_information);
-      
-      return rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    }
 
-    // Language toggle button
-    document.getElementById('langToggleBtn').addEventListener('click', function() {
-      const newLang = currentLang === 'ar' ? 'en' : 'ar';
-      switchLanguage(newLang);
-    });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
 
-    document.getElementById('startBtn').addEventListener('click', async function() {
-      const t = translations[currentLang];
-      const file = document.getElementById('fileInput').files[0];
-      
-      document.getElementById('resultContainer').classList.add('hidden');
-      document.getElementById('downloadTxtBtn').classList.add('hidden');
-      document.getElementById('downloadJsonBtn').classList.add('hidden');
-      
-      setLoading(true);
-      showAlert(t.processing, 'info');
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
 
-      try {
-        const data = await runOCR();
-        if (!data) {
-          setLoading(false);
-          return;
+        function handleFileSelect(file) {
+            try {
+                validateFile(file);
+                currentFile = file;
+                
+                const fileInfo = document.getElementById('fileInfo');
+                const fileDetails = document.getElementById('fileDetails');
+                
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                fileDetails.textContent = `${file.name} (${sizeMB} MB)`;
+                fileInfo.classList.add('active');
+                
+            } catch (error) {
+                showAlert(error.message, 'error');
+            }
         }
 
-        // Handle PDF response (returns text directly)
-        if (typeof data === 'string') {
-          extractedText = data;
-          
-          if (extractedText) {
-            document.getElementById('resultText').textContent = extractedText;
-            generatedJson = buildDynamicJson(extractedText);
-            renderFormDisplay(generatedJson);
-            document.getElementById('jsonOutput').innerHTML = '<pre>' + JSON.stringify(generatedJson, null, 2) + '</pre>';
-            
-            document.getElementById('resultContainer').classList.remove('hidden');
-            document.getElementById('downloadTxtBtn').classList.remove('hidden');
-            document.getElementById('downloadJsonBtn').classList.remove('hidden');
-            
-            showAlert(t.pdf_success, 'success');
-          } else {
-            showAlert(t.alert_no_text, 'error');
-          }
+        function clearFile() {
+            currentFile = null;
+            fileInput.value = '';
+            document.getElementById('fileInfo').classList.remove('active');
+            document.getElementById('outputSection').classList.remove('active');
         }
-        // Handle regular image response
-        else if (data.ParsedResults && data.ParsedResults[0]) {
-          extractedText = data.ParsedResults[0].ParsedText.trim();
-          
-          if (extractedText) {
-            document.getElementById('resultText').textContent = extractedText;
-            generatedJson = buildDynamicJson(extractedText);
-            renderFormDisplay(generatedJson);
-            document.getElementById('jsonOutput').innerHTML = '<pre>' + JSON.stringify(generatedJson, null, 2) + '</pre>';
+
+        // Fetch with Retry and Timeout
+        async function fetchWithRetry(url, options, retries = CONFIG.MAX_RETRIES) {
+            const t = translations[currentLang];
             
-            document.getElementById('resultContainer').classList.remove('hidden');
-            document.getElementById('downloadTxtBtn').classList.remove('hidden');
-            document.getElementById('downloadJsonBtn').classList.remove('hidden');
-            
-            showAlert(t.alert_success, 'success');
-          } else {
-            showAlert(t.alert_no_text, 'error');
-          }
-        } else {
-          showAlert(t.alert_extraction_failed, 'error');
+            for (let i = 0; i < retries; i++) {
+                try {
+                    // Show retry info if not first attempt
+                    if (i > 0) {
+                        document.getElementById('retryInfo').classList.add('active');
+                        await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * Math.pow(2, i - 1)));
+                    }
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
+
+                    const response = await Promise.race([
+                        fetch(url, { ...options, signal: controller.signal }),
+                        new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error(t.errorTimeout)), CONFIG.API_TIMEOUT)
+                        )
+                    ]);
+
+                    clearTimeout(timeoutId);
+                    document.getElementById('retryInfo').classList.remove('active');
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    return response;
+
+                } catch (error) {
+                    if (i === retries - 1) {
+                        document.getElementById('retryInfo').classList.remove('active');
+                        
+                        if (error.name === 'AbortError' || error.message.includes('timeout')) {
+                            throw new Error(t.errorTimeout);
+                        } else if (!navigator.onLine) {
+                            throw new Error(t.errorNetwork);
+                        }
+                        throw error;
+                    }
+                }
+            }
         }
-      } catch (error) {
-        showAlert(t.error_message + ': ' + error.message, 'error');
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    });
 
-    document.getElementById('clearBtn').addEventListener('click', function() {
-      const t = translations[currentLang];
-      document.getElementById('fileInput').value = '';
-      document.getElementById('urlInput').value = '';
-      document.getElementById('resultContainer').classList.add('hidden');
-      document.getElementById('downloadTxtBtn').classList.add('hidden');
-      document.getElementById('downloadJsonBtn').classList.add('hidden');
-      extractedText = '';
-      generatedJson = {};
-      showAlert(t.alert_clear, 'info');
-    });
+        // OCR Processing with Enhanced Error Handling
+        async function runOCR(imageBlob, language) {
+            const formData = new FormData();
+            formData.append('file', imageBlob, 'image.png');
+            formData.append('language', language);
+            formData.append('isOverlayRequired', 'false');
+            formData.append('apikey', CONFIG.API_KEY);
 
-    document.getElementById('downloadTxtBtn').addEventListener('click', function() {
-      const t = translations[currentLang];
-      const blob = new Blob([extractedText], { type: 'text/plain' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'OCR_Result.txt';
-      link.click();
-      showAlert(t.alert_download_txt, 'success');
-    });
+            const response = await fetchWithRetry(
+                'https://api.ocr.space/parse/image',
+                { method: 'POST', body: formData }
+            );
 
-    document.getElementById('downloadJsonBtn').addEventListener('click', function() {
-      const t = translations[currentLang];
-      const blob = new Blob([JSON.stringify(generatedJson, null, 2)], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'OCR_Result.json';
-      link.click();
-      showAlert(t.alert_download_json, 'success');
-    });
+            const result = await response.json();
 
-    // File name display
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-      if (e.target.files.length > 0) {
-        const t = translations[currentLang];
-        const fileName = e.target.files[0].name;
-        showAlert(t.alert_file_selected + fileName, 'success');
-      }
-    });
+            if (result.IsErroredOnProcessing) {
+                throw new Error(result.ErrorMessage?.[0] || 'OCR processing failed');
+            }
 
-    // Save buttons event listeners
-    document.getElementById('saveJsonBtn').addEventListener('click', function() {
-      const t = translations[currentLang];
-      const timestamp = getTimestamp();
-      const filename = `OCR_Data_${timestamp}.json`;
-      const content = JSON.stringify(generatedJson, null, 2);
-      downloadFile(content, filename, 'application/json');
-      showAlert(t.saved_success, 'success');
-    });
+            return result.ParsedResults?.[0]?.ParsedText || '';
+        }
 
-    document.getElementById('saveCsvBtn').addEventListener('click', function() {
-      const t = translations[currentLang];
-      const timestamp = getTimestamp();
-      const filename = `OCR_Data_${timestamp}.csv`;
-      const content = convertToCSV(generatedJson);
-      downloadFile(content, filename, 'text/csv');
-      showAlert(t.saved_success, 'success');
-    });
+        // PDF Processing with Batching
+        async function processPdfFile(file, language) {
+            const t = translations[currentLang];
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const totalPages = pdf.numPages;
 
-    document.getElementById('copyBtn').addEventListener('click', function() {
-      const t = translations[currentLang];
-      const content = JSON.stringify(generatedJson, null, 2);
-      navigator.clipboard.writeText(content).then(() => {
-        showAlert(t.copied_success, 'success');
-      }).catch(err => {
-        console.error('Failed to copy:', err);
-        showAlert(t.error_message, 'error');
-      });
-    });
+            // Validate page count
+            if (totalPages > CONFIG.MAX_PDF_PAGES) {
+                throw new Error(t.errorPdfPages);
+            }
 
-    // Initialize with default language (Arabic)
-    switchLanguage('ar');
-  </script>
+            let allText = '';
+            const batches = Math.ceil(totalPages / CONFIG.BATCH_SIZE);
+
+            for (let batch = 0; batch < batches; batch++) {
+                const startPage = batch * CONFIG.BATCH_SIZE + 1;
+                const endPage = Math.min((batch + 1) * CONFIG.BATCH_SIZE, totalPages);
+
+                // Process batch in parallel
+                const batchPromises = [];
+                for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+                    batchPromises.push(processPdfPage(pdf, pageNum, language, totalPages));
+                }
+
+                const batchResults = await Promise.all(batchPromises);
+                allText += batchResults.join('\n\n');
+
+                // Update progress
+                const progress = Math.round((endPage / totalPages) * 100);
+                updateProgress(progress, t.processingPage.replace('{page}', endPage).replace('{total}', totalPages));
+            }
+
+            return allText;
+        }
+
+        async function processPdfPage(pdf, pageNum, language, totalPages) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 2 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const text = await runOCR(blob, language);
+
+            return text;
+        }
+
+        // Main Process Function
+        async function processFile() {
+            const t = translations[currentLang];
+
+            try {
+                if (!currentFile) {
+                    throw new Error(t.errorNoFile);
+                }
+
+                const { isImage, isPdf } = validateFile(currentFile);
+                const language = document.getElementById('languageSelect').value;
+
+                // UI Updates
+                document.getElementById('processBtn').disabled = true;
+                document.getElementById('spinner').classList.add('active');
+                document.getElementById('progressContainer').classList.add('active');
+                updateProgress(0, '');
+
+                let extractedText = '';
+
+                if (isImage) {
+                    updateProgress(50, 'معالجة الصورة...');
+                    extractedText = await runOCR(currentFile, language);
+                    updateProgress(100, t.complete);
+                } else if (isPdf) {
+                    extractedText = await processPdfFile(currentFile, language);
+                }
+
+                // Process extracted text
+                extractedData.text = extractedText;
+                extractedData.json = buildEnhancedJson(extractedText);
+                extractedData.csv = jsonToCSV(extractedData.json);
+
+                // Display results
+                displayResults();
+                showAlert('تم استخراج النص بنجاح!', 'success');
+
+            } catch (error) {
+                console.error('Processing error:', error);
+                showAlert(t.errorGeneral + error.message, 'error');
+            } finally {
+                document.getElementById('processBtn').disabled = false;
+                document.getElementById('spinner').classList.remove('active');
+                document.getElementById('retryInfo').classList.remove('active');
+            }
+        }
+
+        // Enhanced Data Extraction with Multiple Patterns
+        function buildEnhancedJson(text) {
+            if (!text) return {};
+
+            const data = {};
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+
+            // Enhanced field patterns with multiple variations
+            const fieldPatterns = {
+                'company_name': [
+                    /(?:company|شركة|اسم الشركة|Company Name)[:\s]+([^\n]+)/i,
+                    /^([A-Z][A-Za-z\s&]+(?:LLC|Inc|Ltd|Corp)?)\s*$/m
+                ],
+                'certificate_number': [
+                    /(?:certificate|رقم الشهادة|Certificate No|Cert\s*#)[:\s]+([A-Z0-9\/-]+)/i,
+                    /(?:رقم|Number)[:\s]+([A-Z0-9\/-]+)/i
+                ],
+                'issue_date': [
+                    /(?:issue|issued|تاريخ الإصدار|Issue Date)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+                    /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/
+                ],
+                'expiry_date': [
+                    /(?:expiry|expires|expiration|تاريخ الانتهاء|Expiry Date)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+                    /(?:valid until|صالح حتى)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i
+                ],
+                'location': [
+                    /(?:location|موقع|address|عنوان)[:\s]+([^\n]+)/i
+                ],
+                'status': [
+                    /(?:status|حالة|الحالة)[:\s]+([^\n]+)/i
+                ]
+            };
+
+            // Extract data using multiple patterns
+            for (const [key, patterns] of Object.entries(fieldPatterns)) {
+                for (const pattern of patterns) {
+                    const match = text.match(pattern);
+                    if (match && match[1]) {
+                        data[key] = match[1].trim();
+                        break;
+                    }
+                }
+            }
+
+            // Add metadata
+            data.extraction_date = new Date().toISOString();
+            data.confidence = calculateConfidence(data);
+            data.raw_lines_count = lines.length;
+
+            return data;
+        }
+
+        function calculateConfidence(data) {
+            const requiredFields = ['company_name', 'certificate_number', 'expiry_date'];
+            const foundFields = requiredFields.filter(field => data[field]);
+            return Math.round((foundFields.length / requiredFields.length) * 100);
+        }
+
+        // JSON to CSV Conversion
+        function jsonToCSV(json) {
+            if (!json || Object.keys(json).length === 0) return '';
+
+            const headers = Object.keys(json).join(',');
+            const values = Object.values(json).map(v => `"${v}"`).join(',');
+
+            return `${headers}\n${values}`;
+        }
+
+        // Display Results
+        function displayResults() {
+            document.getElementById('textOutput').textContent = extractedData.text;
+            document.getElementById('jsonOutput').textContent = JSON.stringify(extractedData.json, null, 2);
+            document.getElementById('csvOutput').textContent = extractedData.csv;
+            document.getElementById('outputSection').classList.add('active');
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.output-tabs button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
+        }
+
+        // Export Functions
+        function exportData(format) {
+            let content, filename, mimeType;
+
+            switch (format) {
+                case 'txt':
+                    content = extractedData.text;
+                    filename = `extracted_text_${Date.now()}.txt`;
+                    mimeType = 'text/plain';
+                    break;
+                case 'json':
+                    content = JSON.stringify(extractedData.json, null, 2);
+                    filename = `extracted_data_${Date.now()}.json`;
+                    mimeType = 'application/json';
+                    break;
+                case 'csv':
+                    content = extractedData.csv;
+                    filename = `extracted_data_${Date.now()}.csv`;
+                    mimeType = 'text/csv';
+                    break;
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            const t = translations[currentLang];
+            const jsonText = JSON.stringify(extractedData.json, null, 2);
+            navigator.clipboard.writeText(jsonText).then(() => {
+                showAlert(t.successCopy, 'success');
+            });
+        }
+
+        // Progress Update
+        function updateProgress(percent, message) {
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('progressText').textContent = message || `${percent}%`;
+        }
+
+        // Alert System
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                alert.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => alert.remove(), 300);
+            }, 4000);
+        }
+
+        // Initialize language on load
+        switchLanguage('ar');
+    </script>
 </body>
 </html>
